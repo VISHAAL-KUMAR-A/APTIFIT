@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'fitness/index.css' %}" />
+  </head>
+  <body>
+    <section>
+      <h1>Profile</h1>
+      <ul class="profile-list">
+        <li>Username: {{ user.username }}</li>
+        <li>Email: {{ user.email }}</li>
+        <li>Date Joined: {{ user.date_joined }}</li>
+        <li>Last Active: {{ user.last_login }}</li>
+      </ul>
+      <div class="logout">
+        <button><a href="{% url 'logout' %}">Log Out</a></button
+        ><button><a href="{% url 'index' %}">Home</a></button>
+      </div>
+    </section>
+  </body>
+</html>

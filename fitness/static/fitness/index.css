@@ -1,0 +1,133 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  list-style: none;
+}
+body {
+  background-color: black;
+}
+section {
+  width: 400px;
+  height: 400px;
+  background-color: bisque;
+  display: block;
+  margin: 100px;
+  align-items: center;
+  left: 300px;
+  position: relative;
+}
+h1 {
+  background-color: rgb(233, 61, 61);
+  width: 100%;
+  height: 90px;
+  font-size: 30px;
+  text-align: center;
+  position: relative;
+  margin-top: 10px;
+}
+ul {
+  position: relative;
+  border: 1px solid white;
+  background-color: rgb(195, 195, 233);
+  width: 100%;
+  height: 80px;
+}
+.logout {
+  position: absolute;
+  width: 100%;
+  bottom: -10px;
+  height: 30px;
+  background-color: rgb(233, 61, 61);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+li {
+  position: relative;
+  row-gap: 10px;
+}
+ul li {
+  margin-bottom: 20px;
+}
+.profile-list {
+  position: relative;
+  border: 1px solid white;
+  background-color: rgb(195, 195, 233);
+  width: 100%;
+  height: 140px;
+  bottom: 1px;
+}
+button {
+  background-color: rgb(160, 229, 160);
+}
+a {
+  text-decoration: none;
+}
+.change-password {
+  width: 400px;
+  height: 500px;
+  background-color: bisque;
+  display: block;
+  margin: 100px;
+  align-items: center;
+  left: 300px;
+  position: relative;
+}
+.change-password-list {
+  position: relative;
+  border: 1px solid white;
+  background-color: rgb(195, 195, 233);
+  width: 100%;
+  height: 350px;
+  bottom: 1px;
+}
+.confirm {
+  position: absolute;
+  bottom: 10px;
+  margin-left: 10px;
+}
+
+.password {
+  margin-left: 10px;
+}
+
+.alert {
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 300px;
+  text-align: center;
+  animation: fadeOut 5s forwards;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}

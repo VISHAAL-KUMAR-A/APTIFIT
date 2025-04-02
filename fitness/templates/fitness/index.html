@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'fitness/index.css' %}" />
+  </head>
+  <body>
+    <section>
+      <h1>Hi <a href="{% url 'profile' %}">{{ user.username }}</a></h1>
+      <p>
+        Welcome to the brilliant example of an authentication app with cutting
+        edge features.
+      </p>
+      <strong>Wanna try them?</strong>
+      <ul>
+        <li><a href="{% url 'profile' %}">Profile</a></li>
+        <li><a href="{% url 'change_password' %}">Change Password</a></li>
+      </ul>
+      <div class="logout">
+        <button><a href="{% url 'logout' %}">Log Out</a></button>
+      </div>
+    </section>
+  </body>
+</html>
