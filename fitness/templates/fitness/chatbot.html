@@ -60,7 +60,49 @@
       display: flex;
       flex-direction: column;
     }
-  </style>
+    
+    .uploaded-image {
+      max-width: 200px;
+      max-height: 200px;
+      margin-top: 5px;
+      border-radius: 5px;
+    }
+    
+    .image-upload {
+      display: none;
+    }
+    
+    .image-preview {
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+    
+    .image-preview img {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 5px;
+    }
+    
+    .preview-container {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .remove-image {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #ff4d4d;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 20px;
+      cursor: pointer;
+    }
+</style>
 {% endblock %}
 
 
@@ -78,22 +120,32 @@
               <b>AI Chatbot</b>
             </div>
             <div class="message-content">
-              Hi, I am your AI Chatbot, you can ask me anything.
+              Hi, I am your fitness and health assistant. Ask me anything about exercise, nutrition, or wellness!
             </div>
           </div>
         </li>
       </ul>
       
     </div>
+    <div class="image-preview" id="imagePreview">
+      <div class="preview-container">
+        <img id="previewImage" src="" alt="Preview">
+        <span class="remove-image" onclick="removeImage()">×</span>
+      </div>
+    </div>
     <br><br>
     <br><br>
     <br><br>
   </div>
-  <form class="message-form">
-    {%csrf_token%}
+  <form class="message-form" enctype="multipart/form-data">
+    {% csrf_token %}
     <div class="input-group">
       <input type="text" class="form-control message-input" placeholder="Type your message...">
+      <input type="file" id="imageUpload" class="image-upload" accept="image/*">
       <div class="input-group-append">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('imageUpload').click()">
+          <i class="fas fa-image"></i> 📷
+        </button>
         <button type="submit" class="btn btn-primary btn-send">Send</button>
       </div>
     </div>
@@ -103,81 +155,128 @@
   const form = document.querySelector('.message-form');
   const input = document.querySelector('.message-input');
   const messagesList = document.querySelector('.messages-list');
+  const imageUpload = document.getElementById('imageUpload');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImage = document.getElementById('previewImage');
+  let uploadedImage = null;
+
+  // Handle image upload preview
+  imageUpload.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+      uploadedImage = file;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        imagePreview.style.display = 'block';
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Remove image preview
+  function removeImage() {
+    uploadedImage = null;
+    previewImage.src = '';
+    imagePreview.style.display = 'none';
+    imageUpload.value = '';
+  }
 
   form.addEventListener('submit', function(event) {
     event.preventDefault();
     const messageText = input.value.trim();
-    if (messageText.length === 0) return; 
+    
+    // Check if there's either text or an image
+    if (messageText.length === 0 && !uploadedImage) return;
+    
+    // Create form data for our request
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    // Add message if exists
     if (messageText) {
-      // Add user message to chat
-      const messageItem = document.createElement('li');
-      messageItem.classList.add('message', 'sent');
-      messageItem.innerHTML = `
+      formData.append('message', messageText);
+    }
+    
+    // Add image if exists
+    if (uploadedImage) {
+      formData.append('image', uploadedImage);
+    }
+    
+    // Create the message content element
+    let messageContent = '';
+    if (messageText) {
+      messageContent += `<div>${messageText}</div>`;
+    }
+    
+    if (uploadedImage) {
+      const imageUrl = URL.createObjectURL(uploadedImage);
+      messageContent += `<div><img src="${imageUrl}" class="uploaded-image" alt="Uploaded image"></div>`;
+    }
+    
+    // Add user message to chat
+    const messageItem = document.createElement('li');
+    messageItem.classList.add('message', 'sent');
+    messageItem.innerHTML = `
+        <div class="message-text">
+        <div class="message-sender">
+            <b>You</b>
+        </div>
+        <div class="message-content">
+            ${messageContent}
+        </div>
+        </div>
+    `; 
+    messagesList.appendChild(messageItem);
+    input.value = '';
+    removeImage(); // Clear image preview
+    
+    // Scroll to bottom of messages
+    const messagesBox = document.querySelector('.messages-box');
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+
+    // Send to server
+    fetch('/chatbot/', {
+      method: 'POST',
+      body: formData // Using FormData which automatically sets the content type
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Create response message
+      const responseItem = document.createElement('li');
+      responseItem.classList.add('message', 'received');
+      responseItem.innerHTML = `
           <div class="message-text">
           <div class="message-sender">
-              <b>You</b>
+              <b>AI Chatbot</b>
           </div>
           <div class="message-content">
-              ${messageText}
+              ${data.response}
           </div>
           </div>
-      `; 
-      messagesList.appendChild(messageItem);
-      input.value = '';
+      `;
+      messagesList.appendChild(responseItem);
       
-      // Scroll to bottom of messages
-      const messagesBox = document.querySelector('.messages-box');
+      // Scroll to bottom again after receiving response
       messagesBox.scrollTop = messagesBox.scrollHeight;
-
-      // Send to server - FIXED URL
-      fetch('/chatbot/', {  // Changed from /fitness/chatbot/ to /chatbot/
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          'message': messageText,
-          'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Create response message
-        const responseItem = document.createElement('li');
-        responseItem.classList.add('message', 'received');
-        responseItem.innerHTML = `
-            <div class="message-text">
-            <div class="message-sender">
-                <b>AI Chatbot</b>
-            </div>
-            <div class="message-content">
-                ${data.response}
-            </div>
-            </div>
-        `;
-        messagesList.appendChild(responseItem);
-        
-        // Scroll to bottom again after receiving response
-        messagesBox.scrollTop = messagesBox.scrollHeight;
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        // Show error message in chat
-        const errorItem = document.createElement('li');
-        errorItem.classList.add('message', 'received');
-        errorItem.innerHTML = `
-            <div class="message-text">
-            <div class="message-sender">
-                <b>AI Chatbot</b>
-            </div>
-            <div class="message-content">
-                Sorry, there was an error processing your request.
-            </div>
-            </div>
-        `;
-        messagesList.appendChild(errorItem);
-      });
-    }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      // Show error message in chat
+      const errorItem = document.createElement('li');
+      errorItem.classList.add('message', 'received');
+      errorItem.innerHTML = `
+          <div class="message-text">
+          <div class="message-sender">
+              <b>AI Chatbot</b>
+          </div>
+          <div class="message-content">
+              Sorry, there was an error processing your request.
+          </div>
+          </div>
+      `;
+      messagesList.appendChild(errorItem);
+    });
   });
 </script>
 {% endblock %}
