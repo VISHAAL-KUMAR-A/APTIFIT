@@ -4,24 +4,206 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'fitness/index.css' %}" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome for the notification icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
-  <body>
-    <section>
-      <h1>Hi <a href="{% url 'profile' %}">{{ user.username }}</a></h1>
-      <p>
-        Welcome to the brilliant example of an authentication app with cutting
-        edge features.
-      </p>
-      <strong>Wanna try them?</strong>
-      <ul>
-        <li><a href="{% url 'profile' %}">Profile</a></li>
-        <li><a href="{% url 'change_password' %}">Change Password</a></li>
-      </ul>
-      <div class="logout">
-        <button><a href="{% url 'logout' %}">Log Out</a></button>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-700 text-white">
+              Home
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Chatbot
+            </a>
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Profile: {{ user.username }}
+            </a>
+            <div class="relative">
+              <a href="#" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+                <i class="fas fa-bell"></i>
+                {% if has_notifications %}
+                <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                {% endif %}
+              </a>
+            </div>
+            <a href="{% url 'change_password' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Change Password
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
       </div>
-    </section>
+    </nav>
+    
+    <div class="container mx-auto px-4 py-8">
+      <!-- Welcome Section -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white mb-2">Welcome, {{ user.username }}!</h1>
+        <p class="text-gray-400">Your fitness journey dashboard</p>
+      </div>
+      
+      <!-- Dashboard Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Diet Plan Section -->
+        <div class="lg:col-span-2">
+          <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+              <h2 class="text-xl font-bold">Your Diet Plan</h2>
+              <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1 rounded transition duration-300">
+                Update Diet
+              </a>
+            </div>
+            
+            <div class="p-5">
+              {% if diet_plan %}
+                <div class="space-y-6">
+                  <!-- Breakfast -->
+                  <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-blue-400">Breakfast</h3>
+                    <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                      <p>{{ diet_plan.breakfast }}</p>
+                      {% if diet_plan.breakfast_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.breakfast_calories }} calories</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Lunch -->
+                  <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-blue-400">Lunch</h3>
+                    <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                      <p>{{ diet_plan.lunch }}</p>
+                      {% if diet_plan.lunch_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.lunch_calories }} calories</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Dinner -->
+                  <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-blue-400">Dinner</h3>
+                    <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                      <p>{{ diet_plan.dinner }}</p>
+                      {% if diet_plan.dinner_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.dinner_calories }} calories</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Snacks -->
+                  <div class="space-y-2">
+                    <h3 class="text-lg font-semibold text-blue-400">Snacks</h3>
+                    <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                      <p>{{ diet_plan.snacks }}</p>
+                      {% if diet_plan.snacks_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.snacks_calories }} calories</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Daily Total -->
+                  {% if diet_plan.total_calories %}
+                    <div class="bg-blue-900 p-4 rounded-lg text-white">
+                      <div class="flex justify-between items-center">
+                        <span class="font-semibold">Daily Total:</span>
+                        <span class="font-bold text-xl">{{ diet_plan.total_calories }} calories</span>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                  <svg class="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  <h3 class="text-lg font-medium text-gray-300 mb-2">No Diet Plan Available</h3>
+                  <p class="text-gray-400 mb-6">You haven't set up your diet plan yet.</p>
+                  <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
+                    Create Diet Plan
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Statistics and Tips Section -->
+        <div class="lg:col-span-1">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Fitness Stats -->
+            <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+              <div class="bg-blue-800 text-white p-4">
+                <h2 class="text-xl font-bold">Your Stats</h2>
+              </div>
+              <div class="p-5 space-y-4">
+                {% if bmi %}
+                  <div class="space-y-1">
+                    <h3 class="text-sm font-medium text-gray-400">Current BMI</h3>
+                    <p class="text-2xl font-bold">{{ bmi }}</p>
+                    <p class="text-sm text-gray-400">{{ bmi_category }}</p>
+                  </div>
+                  
+                  <div class="space-y-1">
+                    <h3 class="text-sm font-medium text-gray-400">Body Fat</h3>
+                    <p class="text-2xl font-bold">{{ body_fat }}%</p>
+                    <p class="text-sm text-gray-400">{{ body_fat_category }}</p>
+                  </div>
+                  
+                  <div class="space-y-1">
+                    <h3 class="text-sm font-medium text-gray-400">Daily Calorie Need</h3>
+                    <p class="text-2xl font-bold">{{ daily_calories }} kcal</p>
+                  </div>
+                {% else %}
+                  <div class="text-center py-6">
+                    <p class="text-gray-400 mb-4">No stats available yet</p>
+                    <a href="{% url 'profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded transition duration-300">
+                      Complete Profile
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Nutrition Tips -->
+            <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+              <div class="bg-blue-800 text-white p-4">
+                <h2 class="text-xl font-bold">Nutrition Tips</h2>
+              </div>
+              <div class="p-5">
+                <ul class="space-y-3 text-gray-300">
+                  <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">•</span>
+                    <span>Stay hydrated by drinking at least 8 glasses of water daily</span>
+                  </li>
+                  <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">•</span>
+                    <span>Include protein in every meal to support muscle recovery</span>
+                  </li>
+                  <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">•</span>
+                    <span>Eat a variety of colorful vegetables for essential nutrients</span>
+                  </li>
+                  <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">•</span>
+                    <span>Limit processed foods and added sugars</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

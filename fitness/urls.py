@@ -6,6 +6,8 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('login/', views.login_view, name='login'),
     path('profile/', views.profile, name='profile'),
+    path('profile/save/', views.save_profile, name='save_profile'),
+    path('profile/update/', views.update_profile, name='update_profile'),
     path('chatbot/', views.chatbot, name='chatbot'),
     path('logout/', views.logout_view, name='logout'),
     path('change-password/', views.change_password, name='change_password'),
@@ -33,4 +35,6 @@ urlpatterns = [
              template_name='fitness/password_reset_complete.html'
          ),
          name='password_reset_complete'),
+    path('diet/create/', views.create_diet, name='create_diet'),
+    path('diet/update/', views.update_diet, name='update_diet'),
 ]

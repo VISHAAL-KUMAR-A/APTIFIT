@@ -64,9 +64,26 @@ def index(request):
 
 @login_required
 def profile(request):
-    return render(request, 'fitness/profile.html', {
-        'user': request.user
-    })
+    user_profile = request.user.userprofile
+    user_has_data = bool(
+        user_profile.height and user_profile.weight and user_profile.sex)
+
+    context = {
+        'user_has_data': user_has_data,
+    }
+
+    if user_has_data:
+        context.update({
+            'height': user_profile.height,
+            'weight': user_profile.weight,
+            'sex': user_profile.sex,
+            'bmi': user_profile.bmi,
+            'bmi_category': user_profile.bmi_category,
+            'body_fat': user_profile.body_fat,
+            'body_fat_category': user_profile.body_fat_category,
+        })
+
+    return render(request, 'fitness/profile.html', context)
 
 
 @login_required
@@ -329,3 +346,56 @@ def chatbot(request):
             })
 
     return render(request, 'fitness/chatbot.html')
+
+
+@login_required
+def save_profile(request):
+    if request.method == 'POST':
+        # Get form data
+        try:
+            height = float(request.POST.get('height'))
+            weight = float(request.POST.get('weight'))
+            sex = request.POST.get('sex')
+
+            # Save to user profile
+            user_profile = request.user.userprofile
+            user_profile.height = height
+            user_profile.weight = weight
+            user_profile.sex = sex
+            user_profile.save()
+
+            messages.success(request, "Your fitness profile has been updated!")
+        except (ValueError, TypeError):
+            messages.error(
+                request, "Invalid data provided. Please check your inputs.")
+
+        return redirect('profile')
+
+    return redirect('profile')
+
+
+@login_required
+def update_profile(request):
+    user_profile = request.user.userprofile
+
+    # Pre-fill the form with existing data
+    context = {
+        'user_has_data': False,  # Show form instead of data
+        'height': user_profile.height,
+        'weight': user_profile.weight,
+        'sex': user_profile.sex,
+    }
+
+    return render(request, 'fitness/profile.html', context)
+
+
+@login_required
+def create_diet(request):
+    # Implementation for creating a diet plan
+    pass
+
+
+@login_required
+def update_diet(request):
+    # Implementation for updating a diet plan
+    pass

@@ -11,6 +11,11 @@ class UserProfile(models.Model):
     last_password_change = models.DateTimeField(auto_now=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
 
+    # Fitness profile data
+    height = models.FloatField(blank=True, null=True)  # in cm
+    weight = models.FloatField(blank=True, null=True)  # in kg
+    sex = models.CharField(max_length=10, blank=True, null=True)
+
     def __str__(self):
         return self.user.username
 
@@ -20,6 +25,96 @@ class UserProfile(models.Model):
         if email:
             self.user.email = email
         self.user.save()
+
+    @property
+    def bmi(self):
+        if self.height and self.weight:
+            height_m = self.height / 100
+            return round(self.weight / (height_m * height_m), 1)
+        return None
+
+    @property
+    def bmi_category(self):
+        bmi = self.bmi
+        if bmi is None:
+            return None
+        elif bmi < 18.5:
+            return "Underweight"
+        elif bmi < 25:
+            return "Normal weight"
+        elif bmi < 30:
+            return "Overweight"
+        else:
+            return "Obese"
+
+    @property
+    def body_fat(self):
+        bmi = self.bmi
+        if bmi is None or not self.sex:
+            return None
+
+        # Using U.S. Navy method estimation (simplified)
+        # Age is assumed to be 35 for this calculation
+        age = 35
+
+        if self.sex.lower() == "male":
+            return round(1.20 * bmi + 0.23 * age - 10.8 * 1 - 5.4, 1)
+        else:
+            return round(1.20 * bmi + 0.23 * age - 10.8 * 0 - 5.4, 1)
+
+    @property
+    def body_fat_category(self):
+        bf = self.body_fat
+        if bf is None or not self.sex:
+            return None
+
+        if self.sex.lower() == "male":
+            if bf < 10:
+                return "Essential fat"
+            elif bf < 14:
+                return "Athletes"
+            elif bf < 21:
+                return "Fitness"
+            elif bf < 25:
+                return "Average"
+            else:
+                return "Obese"
+        else:
+            if bf < 14:
+                return "Essential fat"
+            elif bf < 21:
+                return "Athletes"
+            elif bf < 25:
+                return "Fitness"
+            elif bf < 32:
+                return "Average"
+            else:
+                return "Obese"
+
+
+class DietPlan(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    breakfast = models.TextField(blank=True, null=True)
+    breakfast_calories = models.IntegerField(blank=True, null=True)
+    lunch = models.TextField(blank=True, null=True)
+    lunch_calories = models.IntegerField(blank=True, null=True)
+    dinner = models.TextField(blank=True, null=True)
+    dinner_calories = models.IntegerField(blank=True, null=True)
+    snacks = models.TextField(blank=True, null=True)
+    snacks_calories = models.IntegerField(blank=True, null=True)
+
+    @property
+    def total_calories(self):
+        total = 0
+        if self.breakfast_calories:
+            total += self.breakfast_calories
+        if self.lunch_calories:
+            total += self.lunch_calories
+        if self.dinner_calories:
+            total += self.dinner_calories
+        if self.snacks_calories:
+            total += self.snacks_calories
+        return total if total > 0 else None
 
 
 @receiver(post_save, sender=User)
