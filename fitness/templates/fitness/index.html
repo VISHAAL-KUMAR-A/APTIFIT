@@ -46,6 +46,19 @@
     </nav>
     
     <div class="container mx-auto px-4 py-8">
+      <!-- Notification area -->
+      {% if has_notifications %}
+      <div class="bg-blue-900 text-white p-4 rounded-lg mb-6 flex justify-between items-center">
+        <div class="flex items-center">
+          <i class="fas fa-bell mr-3"></i>
+          <p>{{ notification_message }}</p>
+        </div>
+        <button onclick="this.parentElement.style.display='none'" class="text-white hover:text-gray-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      {% endif %}
+      
       <!-- Welcome Section -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-white mb-2">Welcome, {{ user.username }}!</h1>
@@ -59,22 +72,47 @@
         <div class="lg:col-span-2">
           <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
             <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
-              <h2 class="text-xl font-bold">Your Diet Plan</h2>
-              <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1 rounded transition duration-300">
-                Update Diet
-              </a>
+              <h2 class="text-xl font-bold">Your Diet Plan: {{ current_day }}</h2>
             </div>
             
+            <!-- Days of week navigation -->
+            {% if diet_plan.has_diet_plan %}
+            <div class="flex overflow-x-auto bg-gray-700 border-b border-gray-600">
+              <a href="{% url 'index' %}?day=monday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Monday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Monday
+              </a>
+              <a href="{% url 'index' %}?day=tuesday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Tuesday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Tuesday
+              </a>
+              <a href="{% url 'index' %}?day=wednesday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Wednesday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Wednesday
+              </a>
+              <a href="{% url 'index' %}?day=thursday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Thursday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Thursday
+              </a>
+              <a href="{% url 'index' %}?day=friday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Friday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Friday
+              </a>
+              <a href="{% url 'index' %}?day=saturday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Saturday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Saturday
+              </a>
+            </div>
+            {% endif %}
+            
             <div class="p-5">
-              {% if diet_plan %}
+              {% if daily_plan %}
                 <div class="space-y-6">
                   <!-- Breakfast -->
                   <div class="space-y-2">
                     <h3 class="text-lg font-semibold text-blue-400">Breakfast</h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
-                      <p>{{ diet_plan.breakfast }}</p>
-                      {% if diet_plan.breakfast_calories %}
-                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.breakfast_calories }} calories</p>
+                      {% if daily_plan.breakfast %}
+                        <p>{{ daily_plan.breakfast }}</p>
+                        {% if daily_plan.breakfast_calories %}
+                          <p class="text-sm text-gray-400 mt-1">{{ daily_plan.breakfast_calories }} calories</p>
+                        {% endif %}
+                      {% else %}
+                        <p class="text-gray-400 italic">Ask the chatbot to generate a diet plan</p>
                       {% endif %}
                     </div>
                   </div>
@@ -83,9 +121,9 @@
                   <div class="space-y-2">
                     <h3 class="text-lg font-semibold text-blue-400">Lunch</h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
-                      <p>{{ diet_plan.lunch }}</p>
-                      {% if diet_plan.lunch_calories %}
-                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.lunch_calories }} calories</p>
+                      <p>{{ daily_plan.lunch|default:"No lunch specified" }}</p>
+                      {% if daily_plan.lunch_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ daily_plan.lunch_calories }} calories</p>
                       {% endif %}
                     </div>
                   </div>
@@ -94,9 +132,9 @@
                   <div class="space-y-2">
                     <h3 class="text-lg font-semibold text-blue-400">Dinner</h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
-                      <p>{{ diet_plan.dinner }}</p>
-                      {% if diet_plan.dinner_calories %}
-                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.dinner_calories }} calories</p>
+                      <p>{{ daily_plan.dinner|default:"No dinner specified" }}</p>
+                      {% if daily_plan.dinner_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ daily_plan.dinner_calories }} calories</p>
                       {% endif %}
                     </div>
                   </div>
@@ -105,22 +143,33 @@
                   <div class="space-y-2">
                     <h3 class="text-lg font-semibold text-blue-400">Snacks</h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
-                      <p>{{ diet_plan.snacks }}</p>
-                      {% if diet_plan.snacks_calories %}
-                        <p class="text-sm text-gray-400 mt-1">{{ diet_plan.snacks_calories }} calories</p>
+                      <p>{{ daily_plan.snacks|default:"No snacks specified" }}</p>
+                      {% if daily_plan.snacks_calories %}
+                        <p class="text-sm text-gray-400 mt-1">{{ daily_plan.snacks_calories }} calories</p>
                       {% endif %}
                     </div>
                   </div>
                   
                   <!-- Daily Total -->
-                  {% if diet_plan.total_calories %}
+                  {% if daily_plan.total_calories %}
                     <div class="bg-blue-900 p-4 rounded-lg text-white">
                       <div class="flex justify-between items-center">
                         <span class="font-semibold">Daily Total:</span>
-                        <span class="font-bold text-xl">{{ diet_plan.total_calories }} calories</span>
+                        <span class="font-bold text-xl">{{ daily_plan.total_calories }} calories</span>
                       </div>
                     </div>
                   {% endif %}
+                </div>
+              {% elif diet_plan.has_diet_plan %}
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                  <svg class="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                  <h3 class="text-lg font-medium text-gray-300 mb-2">No Diet Plan for {{ current_day }}</h3>
+                  <p class="text-gray-400 mb-6">You haven't set up your diet plan for this day yet.</p>
+                  <a href="{% url 'update_diet' %}?day={{ current_day|lower }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
+                    Create {{ current_day }} Diet Plan
+                  </a>
                 </div>
               {% else %}
                 <div class="flex flex-col items-center justify-center py-10 text-center">
@@ -128,10 +177,11 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                   </svg>
                   <h3 class="text-lg font-medium text-gray-300 mb-2">No Diet Plan Available</h3>
-                  <p class="text-gray-400 mb-6">You haven't set up your diet plan yet.</p>
-                  <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
-                    Create Diet Plan
+                  <p class="text-gray-400 mb-6">Ask our chatbot to generate a weekly diet plan based on your profile data.</p>
+                  <a href="{% url 'chatbot' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
+                    Get Diet Plan from Chatbot
                   </a>
+                  <p class="text-sm text-gray-400 mt-4">Simply ask: "Generate a weekly diet plan for me based on my profile"</p>
                 </div>
               {% endif %}
             </div>

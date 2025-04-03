@@ -35,6 +35,6 @@ urlpatterns = [
              template_name='fitness/password_reset_complete.html'
          ),
          name='password_reset_complete'),
-    path('diet/create/', views.create_diet, name='create_diet'),
-    path('diet/update/', views.update_diet, name='update_diet'),
+    path('profile/save-notification/', views.save_notification_preference,
+         name='save_notification_preference'),
 ]

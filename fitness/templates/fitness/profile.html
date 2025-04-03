@@ -92,6 +92,25 @@
               </div>
             </div>
             
+            <!-- Notification Preferences -->
+            <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+              <h3 class="text-gray-400 text-sm font-medium mb-2">Diet Plan Notification Preference</h3>
+              <p class="text-xl font-semibold">{{ notification_preference|default:"Not set" }}</p>
+              <div class="mt-3">
+                <form method="post" action="{% url 'save_notification_preference' %}" class="flex space-x-4">
+                  {% csrf_token %}
+                  <select name="notification_preference" class="bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="daily" {% if notification_preference == 'daily' %}selected{% endif %}>Daily</option>
+                    <option value="weekly" {% if notification_preference == 'weekly' %}selected{% endif %}>Weekly</option>
+                    <option value="none" {% if notification_preference == 'none' %}selected{% endif %}>None</option>
+                  </select>
+                  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300">
+                    Save Preference
+                  </button>
+                </form>
+              </div>
+            </div>
+            
             <a href="{% url 'update_profile' %}" class="block w-full md:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
               Update Information
             </a>

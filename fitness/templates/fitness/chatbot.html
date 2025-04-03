@@ -1,282 +1,290 @@
-{% extends 'fitness/base.html' %}
-
-{% block styles %}
-<style>
-    body, html {
-      height: 100%;
-    }
-
-    .messages-box {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .messages-list {
-      padding-left: 0;
-    }
-
-    .message {
-      margin-bottom: 15px;
-      list-style: none;
-    }
-
-    .message-text {
-      padding: 10px;
-      border-radius: 5px;
-    }
-
-    .sent {
-      background-color: #dcf8c6;
-      align-self: flex-end;
-    }
-
-    .received {
-      background-color: #f1f0f0;
-      align-self: flex-start;
-    }
-
-    .message-form {
-      display: flex;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 10px;
-      background-color: #f8f9fa;
-    }
-
-    .message-input {
-      flex: 1;
-      border-radius: 0;
-      border-right: none;
-    }
-
-    .btn-send {
-      border-radius: 0;
-    }
-
-    .chat-container {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot | AptiFit</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Home
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-700 text-white">
+              Chatbot
+            </a>
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Profile: {{ user.username }}
+            </a>
+            <div class="relative">
+              <a href="#" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+                <i class="fas fa-bell"></i>
+                {% if has_notifications %}
+                <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                {% endif %}
+              </a>
+            </div>
+            <a href="{% url 'change_password' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Change Password
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
     
-    .uploaded-image {
-      max-width: 200px;
-      max-height: 200px;
-      margin-top: 5px;
-      border-radius: 5px;
-    }
-    
-    .image-upload {
-      display: none;
-    }
-    
-    .image-preview {
-      margin-top: 10px;
-      text-align: center;
-      display: none;
-    }
-    
-    .image-preview img {
-      max-width: 100px;
-      max-height: 100px;
-      border-radius: 5px;
-    }
-    
-    .preview-container {
-      position: relative;
-      display: inline-block;
-    }
-    
-    .remove-image {
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      background: #ff4d4d;
-      color: white;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      text-align: center;
-      line-height: 20px;
-      cursor: pointer;
-    }
-</style>
-{% endblock %}
-
-
-{% block content %}
-<div class="chat-container">
-  <div class="card flex-grow-1">
-    <div class="card-header bg-primary text-white">Chat</div>
-    <div class="card-body messages-box">
-      
-      <ul class="list-unstyled messages-list">
+    <div class="container mx-auto px-4 py-6">
+      <!-- Chatbot Section -->
+      <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden mb-6">
+        <div class="bg-blue-800 text-white p-4">
+          <h2 class="text-xl font-bold">AI Fitness Assistant</h2>
+          <p class="text-sm text-blue-200">Ask me about exercise, nutrition, or wellness!</p>
+        </div>
         
-        <li class="message received">
-          <div class="message-text">
-            <div class="message-sender">
-              <b>AI Chatbot</b>
-            </div>
-            <div class="message-content">
-              Hi, I am your fitness and health assistant. Ask me anything about exercise, nutrition, or wellness!
+        <!-- Chat Messages Area -->
+        <div class="h-96 overflow-y-auto p-4 bg-gray-900" id="messages-container">
+          <!-- Welcome Message -->
+          <div class="flex flex-col mb-4">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                  <i class="fas fa-robot text-white"></i>
+                </div>
+              </div>
+              <div class="ml-3 bg-gray-800 py-2 px-4 rounded-lg max-w-3xl">
+                <p class="text-sm">Hi, I am your fitness and health assistant. Ask me anything about exercise, nutrition, or wellness!</p>
+              </div>
             </div>
           </div>
-        </li>
-      </ul>
+          
+          <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <!-- Image Preview -->
+        <div id="image-preview" class="hidden p-3 bg-gray-700 border-t border-gray-600">
+          <div class="relative inline-block">
+            <img id="preview-image" src="" alt="Preview" class="max-h-24 rounded">
+            <button onclick="removeImage()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center hover:bg-red-600 transition duration-300">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Input Area -->
+        <form id="chat-form" class="border-t border-gray-700 p-3 bg-gray-700 flex items-center" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="text" id="message-input" placeholder="Type your message..." 
+                 class="flex-1 bg-gray-800 text-white border border-gray-600 rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          
+          <label for="image-upload" class="cursor-pointer bg-gray-600 px-3 py-2 border-t border-b border-gray-600 text-gray-200 hover:bg-gray-500 transition duration-300">
+            <i class="fas fa-image"></i>
+          </label>
+          <input type="file" id="image-upload" accept="image/*" class="hidden">
+          
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700 transition duration-300 flex items-center">
+            <i class="fas fa-paper-plane mr-1"></i> Send
+          </button>
+        </form>
+      </div>
       
-    </div>
-    <div class="image-preview" id="imagePreview">
-      <div class="preview-container">
-        <img id="previewImage" src="" alt="Preview">
-        <span class="remove-image" onclick="removeImage()">×</span>
+      <!-- Tips and Suggestions Section -->
+      <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+        <div class="bg-blue-800 text-white p-4">
+          <h2 class="text-xl font-bold">Chat Tips</h2>
+        </div>
+        <div class="p-4">
+          <ul class="space-y-3 text-gray-300">
+            <li class="flex items-start">
+              <span class="text-blue-400 mr-2">•</span>
+              <span>Ask for a personalized weekly diet plan based on your profile</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-blue-400 mr-2">•</span>
+              <span>Upload food images for nutritional analysis</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-blue-400 mr-2">•</span>
+              <span>Get workout recommendations for your fitness level</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-blue-400 mr-2">•</span>
+              <span>Ask for advice on improving your BMI or body fat percentage</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
-    <br><br>
-    <br><br>
-    <br><br>
-  </div>
-  <form class="message-form" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="input-group">
-      <input type="text" class="form-control message-input" placeholder="Type your message...">
-      <input type="file" id="imageUpload" class="image-upload" accept="image/*">
-      <div class="input-group-append">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('imageUpload').click()">
-          <i class="fas fa-image"></i> 📷
-        </button>
-        <button type="submit" class="btn btn-primary btn-send">Send</button>
-      </div>
-    </div>
-  </form>
-</div>
-<script>
-  const form = document.querySelector('.message-form');
-  const input = document.querySelector('.message-input');
-  const messagesList = document.querySelector('.messages-list');
-  const imageUpload = document.getElementById('imageUpload');
-  const imagePreview = document.getElementById('imagePreview');
-  const previewImage = document.getElementById('previewImage');
-  let uploadedImage = null;
 
-  // Handle image upload preview
-  imageUpload.addEventListener('change', function() {
-    const file = this.files[0];
-    if (file) {
-      uploadedImage = file;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        previewImage.src = e.target.result;
-        imagePreview.style.display = 'block';
+    <script>
+      const form = document.getElementById('chat-form');
+      const input = document.getElementById('message-input');
+      const messagesContainer = document.getElementById('messages-container');
+      const imageUpload = document.getElementById('image-upload');
+      const imagePreview = document.getElementById('image-preview');
+      const previewImage = document.getElementById('preview-image');
+      let uploadedImage = null;
+
+      // Handle image upload preview
+      imageUpload.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+          uploadedImage = file;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            imagePreview.classList.remove('hidden');
+          }
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Remove image preview
+      function removeImage() {
+        uploadedImage = null;
+        previewImage.src = '';
+        imagePreview.classList.add('hidden');
+        imageUpload.value = '';
       }
-      reader.readAsDataURL(file);
-    }
-  });
 
-  // Remove image preview
-  function removeImage() {
-    uploadedImage = null;
-    previewImage.src = '';
-    imagePreview.style.display = 'none';
-    imageUpload.value = '';
-  }
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const messageText = input.value.trim();
+        
+        // Check if there's either text or an image
+        if (messageText.length === 0 && !uploadedImage) return;
+        
+        // Create form data for our request
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Add message if exists
+        if (messageText) {
+          formData.append('message', messageText);
+        }
+        
+        // Add image if exists
+        if (uploadedImage) {
+          formData.append('image', uploadedImage);
+        }
+        
+        // Add user message to chat
+        const userMessageHTML = `
+          <div class="flex flex-col mb-4">
+            <div class="flex items-start justify-end">
+              <div class="mr-3 bg-blue-700 py-2 px-4 rounded-lg max-w-3xl">
+                <p class="text-sm">${messageText}</p>
+                ${uploadedImage ? `<img src="${URL.createObjectURL(uploadedImage)}" alt="Uploaded" class="mt-2 max-h-40 rounded">` : ''}
+              </div>
+              <div class="flex-shrink-0">
+                <div class="h-8 w-8 rounded-full bg-gray-600 flex items-center justify-center">
+                  <i class="fas fa-user text-white"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        messagesContainer.insertAdjacentHTML('beforeend', userMessageHTML);
+        input.value = '';
+        removeImage(); // Clear image preview
+        
+        // Scroll to bottom of messages
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-  form.addEventListener('submit', function(event) {
-    event.preventDefault();
-    const messageText = input.value.trim();
-    
-    // Check if there's either text or an image
-    if (messageText.length === 0 && !uploadedImage) return;
-    
-    // Create form data for our request
-    const formData = new FormData();
-    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-    
-    // Add message if exists
-    if (messageText) {
-      formData.append('message', messageText);
-    }
-    
-    // Add image if exists
-    if (uploadedImage) {
-      formData.append('image', uploadedImage);
-    }
-    
-    // Create the message content element
-    let messageContent = '';
-    if (messageText) {
-      messageContent += `<div>${messageText}</div>`;
-    }
-    
-    if (uploadedImage) {
-      const imageUrl = URL.createObjectURL(uploadedImage);
-      messageContent += `<div><img src="${imageUrl}" class="uploaded-image" alt="Uploaded image"></div>`;
-    }
-    
-    // Add user message to chat
-    const messageItem = document.createElement('li');
-    messageItem.classList.add('message', 'sent');
-    messageItem.innerHTML = `
-        <div class="message-text">
-        <div class="message-sender">
-            <b>You</b>
-        </div>
-        <div class="message-content">
-            ${messageContent}
-        </div>
-        </div>
-    `; 
-    messagesList.appendChild(messageItem);
-    input.value = '';
-    removeImage(); // Clear image preview
-    
-    // Scroll to bottom of messages
-    const messagesBox = document.querySelector('.messages-box');
-    messagesBox.scrollTop = messagesBox.scrollHeight;
+        // Show loading indicator
+        const loadingHTML = `
+          <div class="flex flex-col mb-4" id="loading-indicator">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                  <i class="fas fa-robot text-white"></i>
+                </div>
+              </div>
+              <div class="ml-3 bg-gray-800 py-2 px-4 rounded-lg">
+                <div class="flex space-x-1">
+                  <div class="h-2 w-2 bg-gray-500 rounded-full animate-bounce"></div>
+                  <div class="h-2 w-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                  <div class="h-2 w-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        messagesContainer.insertAdjacentHTML('beforeend', loadingHTML);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    // Send to server
-    fetch('/chatbot/', {
-      method: 'POST',
-      body: formData // Using FormData which automatically sets the content type
-    })
-    .then(response => response.json())
-    .then(data => {
-      // Create response message
-      const responseItem = document.createElement('li');
-      responseItem.classList.add('message', 'received');
-      responseItem.innerHTML = `
-          <div class="message-text">
-          <div class="message-sender">
-              <b>AI Chatbot</b>
-          </div>
-          <div class="message-content">
-              ${data.response}
-          </div>
-          </div>
-      `;
-      messagesList.appendChild(responseItem);
-      
-      // Scroll to bottom again after receiving response
-      messagesBox.scrollTop = messagesBox.scrollHeight;
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      // Show error message in chat
-      const errorItem = document.createElement('li');
-      errorItem.classList.add('message', 'received');
-      errorItem.innerHTML = `
-          <div class="message-text">
-          <div class="message-sender">
-              <b>AI Chatbot</b>
-          </div>
-          <div class="message-content">
-              Sorry, there was an error processing your request.
-          </div>
-          </div>
-      `;
-      messagesList.appendChild(errorItem);
-    });
-  });
-</script>
-{% endblock %}
+        // Send to server
+        fetch('/chatbot/', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Remove loading indicator
+          document.getElementById('loading-indicator').remove();
+          
+          // Format the response text
+          let formattedResponse = data.response.replace(/\n/g, '<br>');
+          
+          // Create response message
+          const botMessageHTML = `
+            <div class="flex flex-col mb-4">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    <i class="fas fa-robot text-white"></i>
+                  </div>
+                </div>
+                <div class="ml-3 bg-gray-800 py-2 px-4 rounded-lg max-w-3xl">
+                  <p class="text-sm">${formattedResponse}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          messagesContainer.insertAdjacentHTML('beforeend', botMessageHTML);
+          
+          // Scroll to bottom again after receiving response
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(error => {
+          // Remove loading indicator
+          document.getElementById('loading-indicator').remove();
+          
+          console.error('Error:', error);
+          // Show error message in chat
+          const errorHTML = `
+            <div class="flex flex-col mb-4">
+              <div class="flex items-start">
+                <div class="flex-shrink-0">
+                  <div class="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-white"></i>
+                  </div>
+                </div>
+                <div class="ml-3 bg-red-900 py-2 px-4 rounded-lg max-w-3xl">
+                  <p class="text-sm">Sorry, there was an error processing your request.</p>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          messagesContainer.insertAdjacentHTML('beforeend', errorHTML);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+      });
+    </script>
+  </body>
+</html>

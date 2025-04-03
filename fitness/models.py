@@ -7,6 +7,12 @@ from django.dispatch import receiver
 
 
 class UserProfile(models.Model):
+    NOTIFICATION_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('none', 'None'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_password_change = models.DateTimeField(auto_now=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -15,6 +21,13 @@ class UserProfile(models.Model):
     height = models.FloatField(blank=True, null=True)  # in cm
     weight = models.FloatField(blank=True, null=True)  # in kg
     sex = models.CharField(max_length=10, blank=True, null=True)
+
+    # Notification preferences
+    notification_preference = models.CharField(
+        max_length=10,
+        choices=NOTIFICATION_CHOICES,
+        default='none'
+    )
 
     def __str__(self):
         return self.user.username
@@ -94,6 +107,35 @@ class UserProfile(models.Model):
 
 class DietPlan(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    # This will store whether the user has a diet plan at all
+    has_diet_plan = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username}'s Diet Plan"
+
+    def get_day_plan(self, day_of_week):
+        """Get the diet plan for a specific day of the week"""
+        try:
+            return self.daily_plans.get(day_of_week=day_of_week.lower())
+        except DailyDietPlan.DoesNotExist:
+            return None
+
+
+class DailyDietPlan(models.Model):
+    DAYS_OF_WEEK = [
+        ('monday', 'Monday'),
+        ('tuesday', 'Tuesday'),
+        ('wednesday', 'Wednesday'),
+        ('thursday', 'Thursday'),
+        ('friday', 'Friday'),
+        ('saturday', 'Saturday'),
+        ('sunday', 'Sunday'),
+    ]
+
+    diet_plan = models.ForeignKey(
+        DietPlan, related_name='daily_plans', on_delete=models.CASCADE)
+    day_of_week = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
     breakfast = models.TextField(blank=True, null=True)
     breakfast_calories = models.IntegerField(blank=True, null=True)
     lunch = models.TextField(blank=True, null=True)
@@ -102,6 +144,9 @@ class DietPlan(models.Model):
     dinner_calories = models.IntegerField(blank=True, null=True)
     snacks = models.TextField(blank=True, null=True)
     snacks_calories = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ['diet_plan', 'day_of_week']
 
     @property
     def total_calories(self):
@@ -115,6 +160,9 @@ class DietPlan(models.Model):
         if self.snacks_calories:
             total += self.snacks_calories
         return total if total > 0 else None
+
+    def __str__(self):
+        return f"{self.diet_plan.user.username}'s {self.get_day_of_week_display()} Diet"
 
 
 @receiver(post_save, sender=User)
