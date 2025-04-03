@@ -3,115 +3,104 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign Up</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'fitness/register.css' %}" />
+    <title>Sign Up | AptiFit</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
-  <body>
-    <section class="register">
-      <div class="header finisher-header" style="width: 100%; height: 300px">
-        <div class="register-box">
-          <form action="{% url 'register' %}" method="post">
-            {% csrf_token %} {% if messages %}
-            <div class="messages">
-              {% for message in messages %}
-              <div
-                class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
-              >
-                {{ message }}
-              </div>
-              {% endfor %}
-            </div>
-            {% endif %}
-            <h2>Sign Up</h2>
-            <div class="input-box">
-              <span class="icon"><ion-icon name="person"></ion-icon></span>
-              <input type="text" name="username" required />
-              <label>Username</label>
-            </div>
-            <h4>
-              Required 150 characters or fewer. Letters, digits and @/./+/-/_
-              only.
-            </h4>
-            <div class="input-box">
-              <span class="icon"><ion-icon name="mail"></ion-icon></span>
-              <input type="email" name="email" required />
-              <label>Email</label>
-            </div>
-            <div class="input-box">
-              <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
-              <input type="password" name="password1" required />
-              <label>Password</label>
-            </div>
-            <h4>
-              <ul>
-                <li>
-                  Your password can't be too similar to your other personal
-                  information.
-                </li>
-                <li>Your password must contain at least 8 characters.</li>
-                <li>Your password can't be a commonly used password.</li>
-                <li>Your password can't be entirely numeric.</li>
-              </ul>
-            </h4>
-            <div class="input-box">
-              <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
-              <input type="password" name="password2" required />
-              <label>Confirm Password</label>
-            </div>
-            <h4>Enter the same password as before, for verification.</h4>
-            <button type="submit">Sign Up</button>
-            <div class="register-link">
-              <p>
-                Already have an account? <a href="{% url 'login' %}">Login</a>
-              </p>
-            </div>
-          </form>
-        </div>
+  <body class="bg-gray-900 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-2xl border border-gray-700">
+      <!-- Logo/Header -->
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-blue-400">AptiFit</h1>
+        <p class="text-gray-400 mt-1">Create your fitness account</p>
       </div>
-    </section>
-    <script
-      type="module"
-      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
-    ></script>
-    <script
-      nomodule
-      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
-    ></script>
-    <script
-      src="{% static 'fitness/finisher-header.es5.min.js' %}"
-      type="text/javascript"
-    ></script>
-    <script type="text/javascript">
-      new FinisherHeader({
-        count: 15,
-        size: {
-          min: 1187,
-          max: 1500,
-          pulse: 0.3,
-        },
-        speed: {
-          x: {
-            min: 0.9,
-            max: 1,
-          },
-          y: {
-            min: 0.9,
-            max: 1,
-          },
-        },
-        colors: {
-          background: "#9138e5",
-          particles: ["#ff4848", "#000000", "#2235e5", "#000000", "#ff0000"],
-        },
-        blending: "overlay",
-        opacity: {
-          center: 0.6,
-          edge: 0.15,
-        },
-        skew: -2,
-        shapes: ["c"],
-      });
-    </script>
+      
+      <!-- Messages -->
+      {% if messages %}
+        <div class="space-y-2">
+          {% for message in messages %}
+            <div class="p-3 rounded-md {% if message.tags == 'error' %}bg-red-900 text-red-200{% else %}bg-green-900 text-green-200{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      <!-- Registration Form -->
+      <form action="{% url 'register' %}" method="post" class="space-y-5">
+        {% csrf_token %}
+        
+        <!-- Username -->
+        <div class="space-y-2">
+          <label for="username" class="block text-sm font-medium text-gray-300">Username</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-user text-gray-500"></i>
+            </div>
+            <input type="text" name="username" id="username" required 
+              class="bg-gray-700 text-white pl-10 pr-3 py-2 w-full rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+          <p class="text-xs text-gray-400">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</p>
+        </div>
+        
+        <!-- Email -->
+        <div class="space-y-2">
+          <label for="email" class="block text-sm font-medium text-gray-300">Email</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-envelope text-gray-500"></i>
+            </div>
+            <input type="email" name="email" id="email" required 
+              class="bg-gray-700 text-white pl-10 pr-3 py-2 w-full rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+        </div>
+        
+        <!-- Password -->
+        <div class="space-y-2">
+          <label for="password1" class="block text-sm font-medium text-gray-300">Password</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-lock text-gray-500"></i>
+            </div>
+            <input type="password" name="password1" id="password1" required 
+              class="bg-gray-700 text-white pl-10 pr-3 py-2 w-full rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+          <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+            <li>Your password can't be too similar to your other personal information.</li>
+            <li>Your password must contain at least 8 characters.</li>
+            <li>Your password can't be a commonly used password.</li>
+            <li>Your password can't be entirely numeric.</li>
+          </ul>
+        </div>
+        
+        <!-- Confirm Password -->
+        <div class="space-y-2">
+          <label for="password2" class="block text-sm font-medium text-gray-300">Confirm Password</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-lock text-gray-500"></i>
+            </div>
+            <input type="password" name="password2" id="password2" required 
+              class="bg-gray-700 text-white pl-10 pr-3 py-2 w-full rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+          <p class="text-xs text-gray-400">Enter the same password as before, for verification.</p>
+        </div>
+        
+        <!-- Submit Button -->
+        <div>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+            Sign Up
+          </button>
+        </div>
+      </form>
+      
+      <!-- Login Link -->
+      <div class="text-center text-sm text-gray-400">
+        Already have an account?
+        <a href="{% url 'login' %}" class="text-blue-400 hover:text-blue-300 font-medium">
+          Login
+        </a>
+      </div>
+    </div>
   </body>
 </html>

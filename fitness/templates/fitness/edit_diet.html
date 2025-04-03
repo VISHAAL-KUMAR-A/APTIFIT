@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Diet Plan | AptiFit</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Home
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Chatbot
+            </a>
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Profile: {{ user.username }}
+            </a>
+            <div class="relative">
+              <a href="#" id="notification-btn" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+                <i class="fas fa-bell"></i>
+                {% if has_notifications %}
+                <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                {% endif %}
+              </a>
+            </div>
+            <a href="{% url 'change_password' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Change Password
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="container mx-auto px-4 py-6">
+      <!-- Edit Diet Plan Section -->
+      <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+        <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+          <h2 class="text-xl font-bold">Edit Diet Plan: {{ day_display }}</h2>
+          <a href="{% url 'index' %}?day={{ day }}" class="bg-gray-600 hover:bg-gray-700 text-white text-sm px-3 py-1 rounded transition duration-300">
+            <i class="fas fa-arrow-left mr-1"></i> Back
+          </a>
+        </div>
+        
+        <div class="p-5">
+          <form action="{% url 'save_diet' %}" method="post" class="space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="day" value="{{ day }}">
+            
+            <!-- Breakfast -->
+            <div class="space-y-2">
+              <label for="breakfast" class="block text-lg font-semibold text-blue-400">Breakfast</label>
+              <textarea 
+                name="breakfast" 
+                id="breakfast" 
+                rows="3" 
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter breakfast details"
+              >{{ daily_plan.breakfast|default:'' }}</textarea>
+              <div class="flex">
+                <label for="breakfast_calories" class="block text-sm font-medium text-gray-400 mr-2 pt-2">Calories:</label>
+                <input 
+                  type="number" 
+                  name="breakfast_calories" 
+                  id="breakfast_calories" 
+                  value="{{ daily_plan.breakfast_calories|default:'' }}" 
+                  class="w-24 bg-gray-700 border border-gray-600 rounded-lg p-1 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="kcal"
+                >
+              </div>
+            </div>
+            
+            <!-- Lunch -->
+            <div class="space-y-2">
+              <label for="lunch" class="block text-lg font-semibold text-blue-400">Lunch</label>
+              <textarea 
+                name="lunch" 
+                id="lunch" 
+                rows="3" 
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter lunch details"
+              >{{ daily_plan.lunch|default:'' }}</textarea>
+              <div class="flex">
+                <label for="lunch_calories" class="block text-sm font-medium text-gray-400 mr-2 pt-2">Calories:</label>
+                <input 
+                  type="number" 
+                  name="lunch_calories" 
+                  id="lunch_calories" 
+                  value="{{ daily_plan.lunch_calories|default:'' }}" 
+                  class="w-24 bg-gray-700 border border-gray-600 rounded-lg p-1 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="kcal"
+                >
+              </div>
+            </div>
+            
+            <!-- Dinner -->
+            <div class="space-y-2">
+              <label for="dinner" class="block text-lg font-semibold text-blue-400">Dinner</label>
+              <textarea 
+                name="dinner" 
+                id="dinner" 
+                rows="3" 
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter dinner details"
+              >{{ daily_plan.dinner|default:'' }}</textarea>
+              <div class="flex">
+                <label for="dinner_calories" class="block text-sm font-medium text-gray-400 mr-2 pt-2">Calories:</label>
+                <input 
+                  type="number" 
+                  name="dinner_calories" 
+                  id="dinner_calories" 
+                  value="{{ daily_plan.dinner_calories|default:'' }}" 
+                  class="w-24 bg-gray-700 border border-gray-600 rounded-lg p-1 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="kcal"
+                >
+              </div>
+            </div>
+            
+            <!-- Snacks -->
+            <div class="space-y-2">
+              <label for="snacks" class="block text-lg font-semibold text-blue-400">Snacks</label>
+              <textarea 
+                name="snacks" 
+                id="snacks" 
+                rows="3" 
+                class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter snacks details"
+              >{{ daily_plan.snacks|default:'' }}</textarea>
+              <div class="flex">
+                <label for="snacks_calories" class="block text-sm font-medium text-gray-400 mr-2 pt-2">Calories:</label>
+                <input 
+                  type="number" 
+                  name="snacks_calories" 
+                  id="snacks_calories" 
+                  value="{{ daily_plan.snacks_calories|default:'' }}" 
+                  class="w-24 bg-gray-700 border border-gray-600 rounded-lg p-1 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="kcal"
+                >
+              </div>
+            </div>
+            
+            <div class="flex justify-end">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded transition duration-300">
+                <i class="fas fa-save mr-1"></i> Save Diet Plan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notification popup -->
+    <div id="notification-popup" class="hidden fixed top-20 right-4 w-80 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden z-50">
+      <div class="bg-blue-800 text-white p-3 flex justify-between items-center">
+        <h3 class="font-bold">Notifications</h3>
+        <button id="close-notification" class="text-white hover:text-gray-300 transition duration-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="notification-content" class="p-4">
+        {% if has_notifications %}
+          <div class="notification-item py-2 border-b border-gray-700">
+            <p>{{ notification_message }}</p>
+            <p class="text-xs text-gray-400 mt-1">Today</p>
+          </div>
+        {% else %}
+          <div class="text-center py-3">
+            <i class="fas fa-bell-slash text-gray-500 text-2xl mb-2"></i>
+            <p class="text-gray-400">No new notifications</p>
+            <p class="text-xs text-gray-500 mt-2">Check back later for updates on your fitness journey</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <script>
+      // Notification popup functionality
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationPopup = document.getElementById('notification-popup');
+      const closeNotification = document.getElementById('close-notification');
+      
+      notificationBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        notificationPopup.classList.toggle('hidden');
+      });
+      
+      closeNotification.addEventListener('click', function() {
+        notificationPopup.classList.add('hidden');
+      });
+      
+      // Close popup when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!notificationPopup.contains(e.target) && e.target !== notificationBtn) {
+          notificationPopup.classList.add('hidden');
+        }
+      });
+    </script>
+  </body>
+</html> 

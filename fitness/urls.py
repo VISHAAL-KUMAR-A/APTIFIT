@@ -37,4 +37,6 @@ urlpatterns = [
          name='password_reset_complete'),
     path('profile/save-notification/', views.save_notification_preference,
          name='save_notification_preference'),
+    path('edit-diet/', views.edit_diet, name='edit_diet'),
+    path('save-diet/', views.save_diet, name='save_diet'),
 ]

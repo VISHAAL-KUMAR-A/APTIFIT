@@ -644,3 +644,126 @@ def save_notification_preference(request):
             messages.error(request, "Invalid notification preference.")
         return redirect('profile')
     return redirect('profile')
+
+
+@login_required
+def edit_diet(request):
+    # Get the day parameter from the URL
+    day = request.GET.get('day', 'monday').lower()
+
+    # Get or create the user's diet plan
+    diet_plan, created = DietPlan.objects.get_or_create(user=request.user)
+
+    if created:
+        diet_plan.has_diet_plan = True
+        diet_plan.save()
+
+    # Get or create the daily plan
+    daily_plan, created = DailyDietPlan.objects.get_or_create(
+        diet_plan=diet_plan,
+        day_of_week=day
+    )
+
+    # Get the display name for the day
+    day_display = dict(DailyDietPlan.DAYS_OF_WEEK).get(day, day.capitalize())
+
+    # Get user profile for notifications
+    user_profile = request.user.userprofile
+
+    # Check if user should see notifications
+    show_notification = False
+    notification_message = ""
+
+    if user_profile.notification_preference != 'none':
+        import datetime
+        today = datetime.datetime.now()
+
+        if user_profile.notification_preference == 'daily':
+            show_notification = True
+            notification_message = f"Remember to follow your {today.strftime('%A')} diet plan!"
+        elif user_profile.notification_preference == 'weekly' and today.weekday() == 0:  # Monday
+            show_notification = True
+            notification_message = "Here's your weekly diet plan reminder!"
+
+    context = {
+        'day': day,
+        'day_display': day_display,
+        'daily_plan': daily_plan,
+        'has_notifications': show_notification,
+        'notification_message': notification_message,
+    }
+
+    return render(request, 'fitness/edit_diet.html', context)
+
+
+@login_required
+def save_diet(request):
+    if request.method == 'POST':
+        day = request.POST.get('day')
+
+        # Get the diet plan
+        diet_plan, created = DietPlan.objects.get_or_create(user=request.user)
+        if created or not diet_plan.has_diet_plan:
+            diet_plan.has_diet_plan = True
+            diet_plan.save()
+
+        # Get or create the daily plan
+        daily_plan, created = DailyDietPlan.objects.get_or_create(
+            diet_plan=diet_plan,
+            day_of_week=day
+        )
+
+        # Update the daily plan with form data
+        daily_plan.breakfast = request.POST.get('breakfast')
+        daily_plan.lunch = request.POST.get('lunch')
+        daily_plan.dinner = request.POST.get('dinner')
+        daily_plan.snacks = request.POST.get('snacks')
+
+        # Update calories if provided
+        breakfast_calories = request.POST.get('breakfast_calories')
+        if breakfast_calories:
+            try:
+                daily_plan.breakfast_calories = int(breakfast_calories)
+            except ValueError:
+                daily_plan.breakfast_calories = None
+        else:
+            daily_plan.breakfast_calories = None
+
+        lunch_calories = request.POST.get('lunch_calories')
+        if lunch_calories:
+            try:
+                daily_plan.lunch_calories = int(lunch_calories)
+            except ValueError:
+                daily_plan.lunch_calories = None
+        else:
+            daily_plan.lunch_calories = None
+
+        dinner_calories = request.POST.get('dinner_calories')
+        if dinner_calories:
+            try:
+                daily_plan.dinner_calories = int(dinner_calories)
+            except ValueError:
+                daily_plan.dinner_calories = None
+        else:
+            daily_plan.dinner_calories = None
+
+        snacks_calories = request.POST.get('snacks_calories')
+        if snacks_calories:
+            try:
+                daily_plan.snacks_calories = int(snacks_calories)
+            except ValueError:
+                daily_plan.snacks_calories = None
+        else:
+            daily_plan.snacks_calories = None
+
+        daily_plan.save()
+
+        # Show success message
+        messages.success(
+            request, f"Your diet plan for {day.capitalize()} has been updated!")
+
+        # Fix the redirect URL - use 'index' named URL with query parameter
+        return redirect(f'/?day={day}')  # Changed from '/index/?day={day}'
+
+    # If not POST, redirect to dashboard
+    return redirect('index')

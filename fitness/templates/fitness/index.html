@@ -27,7 +27,7 @@
               Profile: {{ user.username }}
             </a>
             <div class="relative">
-              <a href="#" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              <a href="#" id="notification-btn" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
                 <i class="fas fa-bell"></i>
                 {% if has_notifications %}
                 <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
@@ -73,6 +73,11 @@
           <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
             <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
               <h2 class="text-xl font-bold">Your Diet Plan: {{ current_day }}</h2>
+              {% if daily_plan %}
+              <a href="{% url 'edit_diet' %}?day={{ current_day|lower }}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition duration-300">
+                <i class="fas fa-edit mr-1"></i> Edit
+              </a>
+              {% endif %}
             </div>
             
             <!-- Days of week navigation -->
@@ -255,5 +260,52 @@
         </div>
       </div>
     </div>
+
+    <!-- Notification popup -->
+    <div id="notification-popup" class="hidden fixed top-20 right-4 w-80 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden z-50">
+      <div class="bg-blue-800 text-white p-3 flex justify-between items-center">
+        <h3 class="font-bold">Notifications</h3>
+        <button id="close-notification" class="text-white hover:text-gray-300 transition duration-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="notification-content" class="p-4">
+        {% if has_notifications %}
+          <div class="notification-item py-2 border-b border-gray-700">
+            <p>{{ notification_message }}</p>
+            <p class="text-xs text-gray-400 mt-1">Today</p>
+          </div>
+        {% else %}
+          <div class="text-center py-3">
+            <i class="fas fa-bell-slash text-gray-500 text-2xl mb-2"></i>
+            <p class="text-gray-400">No new notifications</p>
+            <p class="text-xs text-gray-500 mt-2">Check back later for updates on your fitness journey</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script>
+      // Notification popup functionality
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationPopup = document.getElementById('notification-popup');
+      const closeNotification = document.getElementById('close-notification');
+      
+      notificationBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        notificationPopup.classList.toggle('hidden');
+      });
+      
+      closeNotification.addEventListener('click', function() {
+        notificationPopup.classList.add('hidden');
+      });
+      
+      // Close popup when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!notificationPopup.contains(e.target) && e.target !== notificationBtn) {
+          notificationPopup.classList.add('hidden');
+        }
+      });
+    </script>
   </body>
 </html>
