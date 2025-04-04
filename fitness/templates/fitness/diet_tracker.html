@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diet Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Home
+            </a>
+            <a href="{% url 'diet_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-700 text-white">
+              Diet Tracker
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Chatbot
+            </a>
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Profile: {{ user.username }}
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="container mx-auto px-4 py-8">
+      <!-- Page Title -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white mb-2">Diet Tracker</h1>
+        <p class="text-gray-400">Track what you eat and update your diet plan automatically</p>
+      </div>
+      
+      <!-- Success message if available -->
+      {% if response_message %}
+      <div class="bg-green-900 text-white p-4 rounded-lg mb-6 flex justify-between items-center">
+        <div class="flex items-center">
+          <i class="fas fa-check-circle mr-3"></i>
+          <p>{{ response_message }}</p>
+        </div>
+        <button onclick="this.parentElement.style.display='none'" class="text-white hover:text-gray-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      {% endif %}
+      
+      <!-- Django messages if available -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="bg-{{ message.tags }}-900 text-white p-4 rounded-lg mb-6 flex justify-between items-center">
+            <div class="flex items-center">
+              <i class="fas fa-info-circle mr-3"></i>
+              <p>{{ message }}</p>
+            </div>
+            <button onclick="this.parentElement.style.display='none'" class="text-white hover:text-gray-300">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      
+      <!-- Main Content -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Food Tracking Form -->
+        <div class="lg:col-span-2">
+          <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+            <div class="bg-blue-800 text-white p-4">
+              <h2 class="text-xl font-bold">Track Your Food</h2>
+            </div>
+            
+            <div class="p-5">
+              <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Meal Type Selection -->
+                <div>
+                  <label class="block text-gray-300 mb-2">What are you tracking?</label>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <label class="relative cursor-pointer">
+                      <input type="radio" name="food_type" value="breakfast" class="sr-only peer" required checked>
+                      <div class="p-3 bg-gray-700 border border-gray-600 rounded-lg text-center peer-checked:bg-blue-700 peer-checked:border-blue-500 transition-all">
+                        <i class="fas fa-coffee mb-1"></i>
+                        <p>Breakfast</p>
+                      </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                      <input type="radio" name="food_type" value="lunch" class="sr-only peer">
+                      <div class="p-3 bg-gray-700 border border-gray-600 rounded-lg text-center peer-checked:bg-blue-700 peer-checked:border-blue-500 transition-all">
+                        <i class="fas fa-hamburger mb-1"></i>
+                        <p>Lunch</p>
+                      </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                      <input type="radio" name="food_type" value="dinner" class="sr-only peer">
+                      <div class="p-3 bg-gray-700 border border-gray-600 rounded-lg text-center peer-checked:bg-blue-700 peer-checked:border-blue-500 transition-all">
+                        <i class="fas fa-utensils mb-1"></i>
+                        <p>Dinner</p>
+                      </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                      <input type="radio" name="food_type" value="snacks" class="sr-only peer">
+                      <div class="p-3 bg-gray-700 border border-gray-600 rounded-lg text-center peer-checked:bg-blue-700 peer-checked:border-blue-500 transition-all">
+                        <i class="fas fa-cookie mb-1"></i>
+                        <p>Snacks</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                <!-- Food Description -->
+                <div>
+                  <label for="food_description" class="block text-gray-300 mb-2">
+                    Describe what you ate (optional if uploading image)
+                  </label>
+                  <textarea id="food_description" name="food_description" rows="3" 
+                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., Grilled chicken breast with quinoa and steamed vegetables"></textarea>
+                </div>
+                
+                <!-- Image Upload -->
+                <div>
+                  <label class="block text-gray-300 mb-2">Upload a photo of your food (optional)</label>
+                  <div class="flex items-center justify-center w-full">
+                    <label for="food_image" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition-all">
+                      <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                        <p class="mb-2 text-sm text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p class="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 5MB)</p>
+                      </div>
+                      <input id="food_image" name="food_image" type="file" class="hidden" accept="image/*" onchange="showImagePreview(this)" />
+                    </label>
+                  </div>
+                  <div id="image_preview" class="mt-3 hidden">
+                    <img id="preview_img" src="#" alt="Food preview" class="max-h-48 rounded-lg mx-auto">
+                    <button type="button" onclick="removeImage()" class="mt-2 text-sm text-red-400 hover:text-red-300">
+                      <i class="fas fa-times mr-1"></i> Remove image
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div>
+                  <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-utensils mr-2"></i> Track this meal
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Analysis Results (shows only after submission) -->
+          {% if analyzed_food %}
+          <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden mt-6">
+            <div class="bg-green-800 text-white p-4">
+              <h2 class="text-xl font-bold">Analysis Results</h2>
+            </div>
+            
+            <div class="p-5">
+              <div class="space-y-4">
+                <div>
+                  <h3 class="text-lg font-semibold text-blue-400">Identified Food</h3>
+                  <p class="mt-1 text-gray-300">{{ analyzed_food }}</p>
+                  
+                  {% if full_analyzed_food %}
+                  <div class="mt-4 bg-gray-700 p-3 rounded-lg">
+                    <h4 class="text-sm font-medium text-gray-400 mb-1">Detailed Analysis</h4>
+                    <p class="text-gray-300">{{ full_analyzed_food }}</p>
+                  </div>
+                  {% endif %}
+                </div>
+                
+                {% if calories is not None %}
+                <div>
+                  <h3 class="text-lg font-semibold text-blue-400">Estimated Calories</h3>
+                  <p class="mt-1 text-2xl font-bold text-white">{{ calories }} calories</p>
+                </div>
+                {% endif %}
+                
+                <div class="bg-blue-900 p-4 rounded-lg">
+                  <p class="text-white">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Your {{ food_type }} for {{ current_day }} has been updated with this information.
+                  </p>
+                  <p class="text-white text-sm mt-2">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Future diet plans have been regenerated based on your profile and today's tracked meals.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Current Diet Plan -->
+        <div class="lg:col-span-1">
+          <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+            <div class="bg-blue-800 text-white p-4">
+              <h2 class="text-xl font-bold">Today's Diet Plan</h2>
+            </div>
+            
+            <div class="p-5">
+              {% if daily_plan %}
+                <div class="space-y-4">
+                  <!-- Breakfast -->
+                  <div>
+                    <h3 class="text-lg font-semibold text-blue-400">Breakfast</h3>
+                    <div class="bg-gray-700 p-3 rounded-lg mt-1">
+                      {% if daily_plan.breakfast %}
+                        <p class="text-gray-300">{{ daily_plan.breakfast }}</p>
+                        {% if daily_plan.breakfast_calories %}
+                          <p class="text-sm text-gray-400 mt-1">{{ daily_plan.breakfast_calories }} calories</p>
+                        {% endif %}
+                      {% else %}
+                        <p class="text-gray-500 italic">Not specified</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Lunch -->
+                  <div>
+                    <h3 class="text-lg font-semibold text-blue-400">Lunch</h3>
+                    <div class="bg-gray-700 p-3 rounded-lg mt-1">
+                      {% if daily_plan.lunch %}
+                        <p class="text-gray-300">{{ daily_plan.lunch }}</p>
+                        {% if daily_plan.lunch_calories %}
+                          <p class="text-sm text-gray-400 mt-1">{{ daily_plan.lunch_calories }} calories</p>
+                        {% endif %}
+                      {% else %}
+                        <p class="text-gray-500 italic">Not specified</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Dinner -->
+                  <div>
+                    <h3 class="text-lg font-semibold text-blue-400">Dinner</h3>
+                    <div class="bg-gray-700 p-3 rounded-lg mt-1">
+                      {% if daily_plan.dinner %}
+                        <p class="text-gray-300">{{ daily_plan.dinner }}</p>
+                        {% if daily_plan.dinner_calories %}
+                          <p class="text-sm text-gray-400 mt-1">{{ daily_plan.dinner_calories }} calories</p>
+                        {% endif %}
+                      {% else %}
+                        <p class="text-gray-500 italic">Not specified</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <!-- Snacks -->
+                  <div>
+                    <h3 class="text-lg font-semibold text-blue-400">Snacks</h3>
+                    <div class="bg-gray-700 p-3 rounded-lg mt-1">
+                      {% if daily_plan.snacks %}
+                        <p class="text-gray-300">{{ daily_plan.snacks }}</p>
+                        {% if daily_plan.snacks_calories %}
+                          <p class="text-sm text-gray-400 mt-1">{{ daily_plan.snacks_calories }} calories</p>
+                        {% endif %}
+                      {% else %}
+                        <p class="text-gray-500 italic">Not specified</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                                    <!-- Daily Total -->
+                                    {% if daily_plan.total_calories %}
+                                    <div class="bg-blue-900 p-4 rounded-lg mt-4">
+                                      <div class="flex justify-between items-center">
+                                        <span class="font-semibold">Daily Total:</span>
+                                        <span class="font-bold text-xl">{{ daily_plan.total_calories }} calories</span>
+                                      </div>
+                                    </div>
+                                    {% endif %}
+                                  </div>
+                                {% else %}
+                                  <div class="text-center py-6">
+                                    <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                    <p class="text-gray-400 mb-4">No diet plan for today</p>
+                                    <a href="{% url 'index' %}" class="text-blue-400 hover:text-blue-300">
+                                      View and create your diet plan
+                                    </a>
+                                  </div>
+                                {% endif %}
+                              </div>
+                            </div>
+                            
+                            <!-- Tracking Tips -->
+                            <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden mt-6">
+                              <div class="bg-blue-800 text-white p-4">
+                                <h2 class="text-xl font-bold">Tracking Tips</h2>
+                              </div>
+                              
+                              <div class="p-5">
+                                <ul class="space-y-2 text-gray-300">
+                                  <li class="flex items-start">
+                                    <span class="text-blue-400 mr-2">•</span>
+                                    <span>Upload clear photos of your meals for better analysis</span>
+                                  </li>
+                                  <li class="flex items-start">
+                                    <span class="text-blue-400 mr-2">•</span>
+                                    <span>Include details about portion sizes in your descriptions</span>
+                                  </li>
+                                  <li class="flex items-start">
+                                    <span class="text-blue-400 mr-2">•</span>
+                                    <span>Track all your meals to get personalized diet suggestions</span>
+                                  </li>
+                                  <li class="flex items-start">
+                                    <span class="text-blue-400 mr-2">•</span>
+                                    <span>Changes to today's diet will update future meal plans</span>
+                                  </li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <script>
+                        // Image preview functionality
+                        function showImagePreview(input) {
+                          if (input.files && input.files[0]) {
+                            var reader = new FileReader();
+                            
+                            reader.onload = function(e) {
+                              document.getElementById('preview_img').src = e.target.result;
+                              document.getElementById('image_preview').classList.remove('hidden');
+                            }
+                            
+                            reader.readAsDataURL(input.files[0]);
+                          }
+                        }
+                        
+                        function removeImage() {
+                          document.getElementById('food_image').value = '';
+                          document.getElementById('image_preview').classList.add('hidden');
+                        }
+                      </script>
+                    </body>
+                  </html>

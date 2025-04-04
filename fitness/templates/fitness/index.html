@@ -20,9 +20,23 @@
             <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-700 text-white">
               Home
             </a>
+            
+            {% if user.userprofile.height and user.userprofile.weight and user.userprofile.sex and user.userprofile.age %}
+            <a href="{% url 'diet_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Diet Tracker
+            </a>
             <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
               Chatbot
             </a>
+            {% else %}
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Diet Tracker
+            </span>
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Chatbot
+            </span>
+            {% endif %}
+            
             <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
               Profile: {{ user.username }}
             </a>
@@ -182,11 +196,20 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                   </svg>
                   <h3 class="text-lg font-medium text-gray-300 mb-2">No Diet Plan Available</h3>
-                  <p class="text-gray-400 mb-6">Ask our chatbot to generate a weekly diet plan based on your profile data.</p>
-                  <a href="{% url 'chatbot' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
-                    Get Diet Plan from Chatbot
-                  </a>
-                  <p class="text-sm text-gray-400 mt-4">Simply ask: "Generate a weekly diet plan for me based on my profile"</p>
+                  
+                  {% if user.userprofile.height and user.userprofile.weight and user.userprofile.sex and user.userprofile.age %}
+                    <p class="text-gray-400 mb-6">Ask our chatbot to generate a weekly diet plan based on your profile data.</p>
+                    <a href="{% url 'chatbot' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
+                      Get Diet Plan from Chatbot
+                    </a>
+                    <p class="text-sm text-gray-400 mt-4">Simply ask: "Generate a weekly diet plan for me based on my profile"</p>
+                  {% else %}
+                    <p class="text-gray-400 mb-6">Complete your profile to unlock the diet plan generator.</p>
+                    <a href="{% url 'profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
+                      Complete Your Profile
+                    </a>
+                    <p class="text-sm text-gray-400 mt-4">We need your height, weight, sex, and age to create a personalized diet plan.</p>
+                  {% endif %}
                 </div>
               {% endif %}
             </div>

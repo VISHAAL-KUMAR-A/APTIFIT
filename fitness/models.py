@@ -21,6 +21,7 @@ class UserProfile(models.Model):
     height = models.FloatField(blank=True, null=True)  # in cm
     weight = models.FloatField(blank=True, null=True)  # in kg
     sex = models.CharField(max_length=10, blank=True, null=True)
+    age = models.IntegerField(blank=True, null=True)  # add age field
 
     # Notification preferences
     notification_preference = models.CharField(
@@ -63,17 +64,14 @@ class UserProfile(models.Model):
     @property
     def body_fat(self):
         bmi = self.bmi
-        if bmi is None or not self.sex:
+        if bmi is None or not self.sex or not self.age:
             return None
 
-        # Using U.S. Navy method estimation (simplified)
-        # Age is assumed to be 35 for this calculation
-        age = 35
-
+        # Using U.S. Navy method estimation with actual age
         if self.sex.lower() == "male":
-            return round(1.20 * bmi + 0.23 * age - 10.8 * 1 - 5.4, 1)
+            return round(1.20 * bmi + 0.23 * self.age - 10.8 * 1 - 5.4, 1)
         else:
-            return round(1.20 * bmi + 0.23 * age - 10.8 * 0 - 5.4, 1)
+            return round(1.20 * bmi + 0.23 * self.age - 10.8 * 0 - 5.4, 1)
 
     @property
     def body_fat_category(self):
@@ -103,6 +101,23 @@ class UserProfile(models.Model):
                 return "Average"
             else:
                 return "Obese"
+
+    @property
+    def daily_calorie_needs(self):
+        """Calculate daily calorie needs using Mifflin-St Jeor Equation with activity factor"""
+        if not self.height or not self.weight or not self.sex or not self.age:
+            return None
+
+        # Calculate BMR using Mifflin-St Jeor Equation
+        if self.sex.lower() == 'male':
+            bmr = 10 * self.weight + 6.25 * self.height - 5 * self.age + 5
+        else:
+            bmr = 10 * self.weight + 6.25 * self.height - 5 * self.age - 161
+
+        # Apply activity factor (default to moderate activity)
+        activity_factor = 1.55  # Moderate exercise (3-5 days/week)
+
+        return int(bmr * activity_factor)
 
 
 class DietPlan(models.Model):

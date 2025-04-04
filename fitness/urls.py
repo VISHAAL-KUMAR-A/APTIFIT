@@ -39,4 +39,6 @@ urlpatterns = [
          name='save_notification_preference'),
     path('edit-diet/', views.edit_diet, name='edit_diet'),
     path('save-diet/', views.save_diet, name='save_diet'),
+    path('diet-tracker/', views.diet_tracker, name='diet_tracker'),
+    path('update-diet/', views.update_diet, name='update_diet'),
 ]

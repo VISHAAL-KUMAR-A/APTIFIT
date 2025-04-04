@@ -73,7 +73,6 @@ def index(request):
     # Check if the user has a diet plan
     try:
         diet_plan = DietPlan.objects.get(user=request.user)
-
         # Get the diet plan for the current day
         daily_plan = diet_plan.get_day_plan(current_day)
     except DietPlan.DoesNotExist:
@@ -85,21 +84,8 @@ def index(request):
     bmi = user_profile.bmi
     body_fat = user_profile.body_fat
 
-    # Calculate daily calories if profile data exists
-    daily_calories = None
-    if user_profile.height and user_profile.weight and user_profile.sex:
-        # Simple BMR calculation using Mifflin-St Jeor Equation
-        weight = user_profile.weight  # kg
-        height = user_profile.height  # cm
-        age = 35  # default age if not available
-
-        if user_profile.sex.lower() == 'male':
-            bmr = 10 * weight + 6.25 * height - 5 * age + 5
-        else:
-            bmr = 10 * weight + 6.25 * height - 5 * age - 161
-
-        # Assuming moderate activity level (1.55 multiplier)
-        daily_calories = int(bmr * 1.55)
+    # Get daily calorie needs from user profile
+    daily_calories = user_profile.daily_calorie_needs
 
     # Check if user should see notifications based on preferences
     show_notification = False
@@ -137,12 +123,32 @@ def index(request):
 @login_required
 def profile(request):
     user_profile = request.user.userprofile
-    user_has_data = bool(
-        user_profile.height and user_profile.weight and user_profile.sex)
+
+    # Check which profile fields are missing
+    missing_fields = []
+    if not user_profile.height:
+        missing_fields.append("height")
+    if not user_profile.weight:
+        missing_fields.append("weight")
+    if not user_profile.sex:
+        missing_fields.append("sex")
+    if not user_profile.age:
+        missing_fields.append("age")
+
+    user_has_data = not missing_fields
+
+    # Create a message about missing fields if any
+    if missing_fields:
+        missing_fields_message = "Your profile is incomplete. Please add your " + \
+            ", ".join(missing_fields) + "."
+    else:
+        missing_fields_message = None
 
     context = {
         'user_has_data': user_has_data,
         'notification_preference': user_profile.notification_preference,
+        'missing_fields_message': missing_fields_message,
+        'missing_fields': missing_fields,
     }
 
     if user_has_data:
@@ -150,10 +156,19 @@ def profile(request):
             'height': user_profile.height,
             'weight': user_profile.weight,
             'sex': user_profile.sex,
+            'age': user_profile.age,
             'bmi': user_profile.bmi,
             'bmi_category': user_profile.bmi_category,
             'body_fat': user_profile.body_fat,
             'body_fat_category': user_profile.body_fat_category,
+        })
+    else:
+        # Include the existing values in the context so they are preserved in the form
+        context.update({
+            'height': user_profile.height,
+            'weight': user_profile.weight,
+            'sex': user_profile.sex,
+            'age': user_profile.age,
         })
 
     return render(request, 'fitness/profile.html', context)
@@ -347,6 +362,26 @@ def ask_openapi(message):
 
 @login_required
 def chatbot(request):
+    # Import the messages framework
+    from django.contrib import messages
+
+    # Check if user profile is complete
+    user_profile = request.user.userprofile
+    profile_complete = bool(
+        user_profile.height and
+        user_profile.weight and
+        user_profile.sex and
+        user_profile.age
+    )
+
+    # If profile is incomplete, redirect to profile page with a message
+    if not profile_complete:
+        messages.warning(
+            request,
+            "Please complete your profile before using the chatbot. We need your height, weight, sex, and age to provide accurate fitness and diet recommendations."
+        )
+        return redirect('profile')
+
     if request.method == 'POST':
         message = request.POST.get('message', '')
         image = request.FILES.get('image', None)
@@ -385,17 +420,23 @@ def chatbot(request):
                 user_profile = request.user.userprofile
 
                 # Only proceed if user has completed their profile
-                if user_profile.height and user_profile.weight and user_profile.sex:
+                if user_profile.height and user_profile.weight and user_profile.sex and user_profile.age:
+                    # Get daily calorie needs
+                    daily_calories = user_profile.daily_calorie_needs or "Not calculated"
+
                     profile_data = f"""
                     User Profile Data:
+                    - Age: {user_profile.age} years
                     - Height: {user_profile.height} cm
                     - Weight: {user_profile.weight} kg
                     - Sex: {user_profile.sex}
                     - BMI: {user_profile.bmi} ({user_profile.bmi_category})
                     - Body Fat: {user_profile.body_fat}% ({user_profile.body_fat_category})
+                    - Daily Calorie Needs: {daily_calories} calories
                     
                     Based on this profile data, create a weekly meal plan (Monday through Sunday) 
-                    with different meals for each day. For each day, include:
+                    with different meals for each day that matches the user's daily calorie needs. The diet plan should be
+                    nutritionally balanced and appropriate for their age, sex, and body composition.
                     
                     Please format each day exactly like this (with the headers and colons):
                     
@@ -412,8 +453,8 @@ def chatbot(request):
                     [Repeat the same format for each day of the week]
                     
                     Make sure to include the calorie count in parentheses after each meal.
-                    The meal plan should be appropriate for their BMI and body composition.
-                    Start your response with "Here's your personalized weekly diet plan:"
+                    The total calories for each day should be approximately {daily_calories} calories.
+                    Start your response with "Here's your personalized weekly diet plan based on your calorie needs:"
                     """
 
                     # Add profile data to the message
@@ -597,12 +638,14 @@ def save_profile(request):
             height = float(request.POST.get('height'))
             weight = float(request.POST.get('weight'))
             sex = request.POST.get('sex')
+            age = int(request.POST.get('age'))
 
             # Save to user profile
             user_profile = request.user.userprofile
             user_profile.height = height
             user_profile.weight = weight
             user_profile.sex = sex
+            user_profile.age = age
             user_profile.save()
 
             messages.success(request, "Your fitness profile has been updated!")
@@ -611,8 +654,6 @@ def save_profile(request):
                 request, "Invalid data provided. Please check your inputs.")
 
         return redirect('profile')
-
-    return redirect('profile')
 
 
 @login_required
@@ -767,3 +808,349 @@ def save_diet(request):
 
     # If not POST, redirect to dashboard
     return redirect('index')
+
+
+@login_required
+def diet_tracker(request):
+    # Check if user profile is complete
+    user_profile = request.user.userprofile
+    profile_complete = bool(
+        user_profile.height and
+        user_profile.weight and
+        user_profile.sex and
+        user_profile.age
+    )
+
+    # If profile is incomplete, redirect to profile page with a message
+    if not profile_complete:
+        messages.warning(
+            request,
+            "Please complete your profile before using the diet tracker. We need your height, weight, sex, and age to provide accurate diet analysis and recommendations."
+        )
+        return redirect('profile')
+
+    # Get the current day
+    import datetime
+    current_day = datetime.datetime.now().strftime('%A').lower()
+
+    # Get user's diet plan
+    try:
+        diet_plan = DietPlan.objects.get(user=request.user)
+        daily_plan = diet_plan.get_day_plan(current_day)
+    except DietPlan.DoesNotExist:
+        diet_plan = None
+        daily_plan = None
+
+    # Get user profile for stats
+    user_profile = request.user.userprofile
+
+    context = {
+        'current_day': current_day.title(),
+        'daily_plan': daily_plan,
+    }
+
+    if request.method == 'POST':
+        food_description = request.POST.get('food_description', '')
+        # breakfast, lunch, dinner, or snack
+        food_type = request.POST.get('food_type', '')
+        food_image = request.FILES.get('food_image', None)
+
+        # Initialize response message
+        response_message = None
+        analyzed_food = None
+        calories = None
+
+        # Initialize the OpenAI client
+        client = openai.OpenAI(api_key=openai_api_key)
+
+        # Prepare the system message for food analysis
+        system_message = """You are a nutrition expert. Analyze the food description or image provided.
+        Provide a detailed description of the food and estimate its calorie content.
+        Your response should be in JSON format with two fields:
+        1. description: A detailed description of the food
+        2. calories: An integer estimate of the calories
+        Example: {"description": "Grilled chicken breast with steamed broccoli and brown rice", "calories": 450}"""
+
+        messages = [{"role": "system", "content": system_message}]
+
+        # Process either image or text
+        if food_image:
+            # Convert image to base64
+            import base64
+            image_data = food_image.read()
+            base64_image = base64.b64encode(image_data).decode('utf-8')
+
+            # Create content list with text and image
+            content = [
+                {"type": "text", "text": f"Analyze this food image. What food is this and how many calories does it contain?"}
+            ]
+
+            # Add the image content
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/{food_image.content_type};base64,{base64_image}"
+                }
+            })
+
+            # Add to messages
+            messages.append({"role": "user", "content": content})
+        elif food_description:
+            # Text-only message
+            messages.append(
+                {"role": "user", "content": f"Food to analyze: {food_description}"})
+        else:
+            messages.error(
+                request, "Please provide either a food description or an image.")
+            return render(request, 'fitness/diet_tracker.html', context)
+
+        try:
+            # Generate response using GPT-4o
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=500,
+            )
+
+            # Extract the response content
+            ai_response = response.choices[0].message.content
+
+            # Try to parse JSON from the response
+            import json
+            import re
+
+            # Look for JSON in the response
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                try:
+                    food_data = json.loads(json_match.group(0))
+                    analyzed_food = food_data.get('description', '')
+                    calories = food_data.get('calories', 0)
+                except json.JSONDecodeError:
+                    # If JSON parsing fails, try to extract information from text
+                    analyzed_food = ai_response
+                    calories_match = re.search(
+                        r'(\d+)\s*calories', ai_response, re.IGNORECASE)
+                    if calories_match:
+                        calories = int(calories_match.group(1))
+            else:
+                # If no JSON found, use the whole response as description
+                analyzed_food = ai_response
+                calories_match = re.search(
+                    r'(\d+)\s*calories', ai_response, re.IGNORECASE)
+                if calories_match:
+                    calories = int(calories_match.group(1))
+
+            # If only food name is provided (without image), extract just the food name
+            if food_description and not food_image:
+                # Extract just the name of the food (first few words)
+                food_name = food_description.split(',')[0].strip()
+                if len(food_name.split()) > 5:  # Limit to 5 words max
+                    food_name = ' '.join(food_name.split()[:5])
+
+                # Store the actual analysis in a variable for display
+                full_analyzed_food = analyzed_food
+
+                # Use simple food name for updating the plan
+                analyzed_food = food_name
+
+            # Update the user's diet plan based on the food type
+            if food_type in ['breakfast', 'lunch', 'dinner', 'snacks']:
+                # Get or create diet plan and daily plan
+                if not diet_plan:
+                    diet_plan = DietPlan.objects.create(
+                        user=request.user, has_diet_plan=True)
+
+                if not daily_plan:
+                    daily_plan = DailyDietPlan.objects.create(
+                        diet_plan=diet_plan,
+                        day_of_week=current_day
+                    )
+
+                # Update the specified meal with just the food name
+                setattr(daily_plan, food_type, analyzed_food)
+                setattr(daily_plan, f"{food_type}_calories", calories)
+                daily_plan.save()
+
+                response_message = f"Your {food_type} has been updated!"
+
+                # Compare with planned diet and update future days if needed
+                update_future_diet_plans(request.user, daily_plan, current_day)
+
+            # For displaying in the results, use the full analysis if available
+            if 'full_analyzed_food' in locals():
+                context['full_analyzed_food'] = full_analyzed_food
+
+            context['response_message'] = response_message
+            context['analyzed_food'] = analyzed_food
+            context['calories'] = calories
+            context['food_type'] = food_type
+            # Update context with the updated daily plan
+            context['daily_plan'] = daily_plan
+
+        except Exception as e:
+            messages.error(request, f"Error analyzing food: {str(e)}")
+
+    return render(request, 'fitness/diet_tracker.html', context)
+
+
+def update_future_diet_plans(user, current_daily_plan, current_day):
+    """
+    Compare the tracked diet with the planned diet and update future days if needed
+    """
+    try:
+        # Get all days of the week in order starting from tomorrow
+        import datetime
+        days = ['monday', 'tuesday', 'wednesday',
+                'thursday', 'friday', 'saturday', 'sunday']
+        current_day_index = days.index(current_day)
+        future_days = days[current_day_index+1:] + days[:current_day_index]
+
+        # Get the user's diet plan
+        diet_plan = DietPlan.objects.get(user=user)
+
+        # Get user profile for AI to use in generating new plans
+        user_profile = user.userprofile
+        profile_data = ""
+        daily_calories = None
+
+        if user_profile.height and user_profile.weight and user_profile.sex and user_profile.age:
+            daily_calories = user_profile.daily_calorie_needs
+            profile_data = f"""
+            User Profile Data:
+            - Age: {user_profile.age} years
+            - Height: {user_profile.height} cm
+            - Weight: {user_profile.weight} kg
+            - Sex: {user_profile.sex}
+            - BMI: {user_profile.bmi} ({user_profile.bmi_category})
+            - Body Fat: {user_profile.body_fat}% ({user_profile.body_fat_category})
+            - Daily Calorie Needs: {daily_calories} calories
+            """
+
+        # Get current tracked diet
+        current_diet = f"""
+        Current Tracked Diet ({current_day.capitalize()}):
+        - Breakfast: {current_daily_plan.breakfast or 'None'} ({current_daily_plan.breakfast_calories or 0} calories)
+        - Lunch: {current_daily_plan.lunch or 'None'} ({current_daily_plan.lunch_calories or 0} calories)
+        - Dinner: {current_daily_plan.dinner or 'None'} ({current_daily_plan.dinner_calories or 0} calories)
+        - Snacks: {current_daily_plan.snacks or 'None'} ({current_daily_plan.snacks_calories or 0} calories)
+        """
+
+        # Initialize the OpenAI client
+        client = openai.OpenAI(api_key=openai_api_key)
+
+        # Update each future day
+        for day in future_days:
+            # Get or create the daily plan for this day
+            future_plan, created = DailyDietPlan.objects.get_or_create(
+                diet_plan=diet_plan,
+                day_of_week=day
+            )
+
+            # Prepare message for OpenAI
+            calorie_instruction = ""
+            if daily_calories:
+                calorie_instruction = f"The total calories for the day should be approximately {daily_calories} calories."
+
+            prompt = f"""
+            Based on the user's profile and their tracked diet for {current_day.capitalize()}, 
+            please generate an appropriate complete diet plan for {day.capitalize()}.
+            
+            {profile_data}
+            
+            {current_diet}
+            
+            Create a comprehensive meal plan for {day.capitalize()} that is balanced and appropriate for the user's profile.
+            {calorie_instruction}
+            
+            The output should be in JSON format with these fields:
+            {{
+                "breakfast": "detailed breakfast description",
+                "breakfast_calories": calories_as_integer,
+                "lunch": "detailed lunch description",
+                "lunch_calories": calories_as_integer,
+                "dinner": "detailed dinner description",
+                "dinner_calories": calories_as_integer,
+                "snacks": "detailed snacks description",
+                "snacks_calories": calories_as_integer
+            }}
+            
+            Make sure the meal plan is nutritionally balanced and appropriate for the user's profile.
+            """
+
+            try:
+                # Generate new meal plan
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.7,
+                    max_tokens=1000,
+                )
+
+                # Extract JSON from response
+                ai_response = response.choices[0].message.content
+
+                # Try to parse JSON from the response
+                import json
+                import re
+
+                # Look for JSON in the response
+                json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                if json_match:
+                    try:
+                        meal_plan = json.loads(json_match.group(0))
+
+                        # Update the future day's plan
+                        future_plan.breakfast = meal_plan.get(
+                            'breakfast', future_plan.breakfast)
+                        future_plan.breakfast_calories = meal_plan.get(
+                            'breakfast_calories', future_plan.breakfast_calories)
+                        future_plan.lunch = meal_plan.get(
+                            'lunch', future_plan.lunch)
+                        future_plan.lunch_calories = meal_plan.get(
+                            'lunch_calories', future_plan.lunch_calories)
+                        future_plan.dinner = meal_plan.get(
+                            'dinner', future_plan.dinner)
+                        future_plan.dinner_calories = meal_plan.get(
+                            'dinner_calories', future_plan.dinner_calories)
+                        future_plan.snacks = meal_plan.get(
+                            'snacks', future_plan.snacks)
+                        future_plan.snacks_calories = meal_plan.get(
+                            'snacks_calories', future_plan.snacks_calories)
+                        future_plan.save()
+                    except json.JSONDecodeError:
+                        # If JSON parsing fails, skip this day
+                        continue
+
+            except Exception as e:
+                # If there's an error, continue to the next day
+                print(f"Error updating {day} diet plan: {str(e)}")
+                continue
+
+    except Exception as e:
+        # Log any errors but don't interrupt the user experience
+        print(f"Error in update_future_diet_plans: {str(e)}")
+
+
+@login_required
+def update_diet(request):
+    """View to update diet plan for a specified day"""
+    # Get the day parameter from the URL
+    day = request.GET.get('day', 'monday').lower()
+
+    # Get or create the user's diet plan
+    diet_plan, created = DietPlan.objects.get_or_create(user=request.user)
+
+    if created:
+        diet_plan.has_diet_plan = True
+        diet_plan.save()
+
+    # Get or create the daily plan
+    daily_plan, created = DailyDietPlan.objects.get_or_create(
+        diet_plan=diet_plan,
+        day_of_week=day
+    )
+
+    # Redirect to edit_diet view with the day parameter
+    return redirect(f'/edit-diet/?day={day}')
