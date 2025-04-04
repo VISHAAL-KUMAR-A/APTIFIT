@@ -235,6 +235,54 @@ class ExercisePrecaution(models.Model):
         return self.text[:50]
 
 
+class HealthData(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='health_data')
+    date = models.DateTimeField(auto_now_add=True)
+    heart_rate = models.IntegerField(null=True, blank=True)
+    steps = models.IntegerField(null=True, blank=True)
+    calories_burnt = models.IntegerField(null=True, blank=True)
+    sleep_hours = models.FloatField(null=True, blank=True)
+    blood_pressure = models.CharField(max_length=20, null=True, blank=True)
+    additional_data = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s health data on {self.date.strftime('%Y-%m-%d')}"
+
+    @property
+    def heart_rate_status(self):
+        if not self.heart_rate:
+            return "Unknown"
+        if self.heart_rate < 60:
+            return "Low"
+        elif self.heart_rate <= 100:
+            return "Normal"
+        else:
+            return "Elevated"
+
+    @property
+    def steps_status(self):
+        if not self.steps:
+            return "Unknown"
+        if self.steps < 5000:
+            return "Low"
+        elif self.steps < 10000:
+            return "Moderate"
+        else:
+            return "Excellent"
+
+    @property
+    def sleep_status(self):
+        if not self.sleep_hours:
+            return "Unknown"
+        if self.sleep_hours < 6:
+            return "Insufficient"
+        elif self.sleep_hours <= 9:
+            return "Optimal"
+        else:
+            return "Excessive"
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

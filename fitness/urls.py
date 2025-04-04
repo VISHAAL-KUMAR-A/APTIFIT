@@ -44,4 +44,5 @@ urlpatterns = [
     path('exercise-tracker/', views.exercise_tracker, name='exercise_tracker'),
     path('view-exercise-plan/', views.view_exercise_plan,
          name='view_exercise_plan'),
+    path('health-tracker/', views.health_tracker, name='health_tracker'),
 ]

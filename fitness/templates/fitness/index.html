@@ -19,6 +19,25 @@
       .animate-pulse {
         animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
       }
+      
+      @keyframes glow {
+        0% {
+          box-shadow: 0 0 3px 1px rgba(253, 126, 20, 0.4), 0 0 5px 2px rgba(239, 68, 68, 0.4);
+          box-shadow: 0 0 5px 2px rgba(253, 126, 20, 0.6), 0 0 8px 4px rgba(239, 68, 68, 0.6);
+        }
+        50% {
+          box-shadow: 0 0 10px 5px rgba(253, 126, 20, 0.9), 0 0 15px 7px rgba(239, 68, 68, 0.8);
+        }
+        100% {
+          box-shadow: 0 0 5px 2px rgba(253, 126, 20, 0.6), 0 0 8px 4px rgba(239, 68, 68, 0.6);
+        }
+      }
+      .notification-glow {
+        animation: glow 2s ease-in-out infinite;
+        background: rgb(239, 68, 68);
+        background: linear-gradient(45deg, rgba(239, 68, 68, 1) 0%, rgba(253, 126, 20, 1) 100%);
+        z-index: 10;
+      }
     </style>
   </head>
   <body class="bg-gray-900 min-h-screen text-gray-200">
@@ -41,6 +60,9 @@
             <a href="{% url 'exercise_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
               Exercise Tracker
             </a>
+            <a href="{% url 'health_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Health Tracker
+            </a>
             <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
               Chatbot
             </a>
@@ -50,6 +72,9 @@
             </span>
             <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
               <i class="fas fa-lock mr-1"></i> Exercise Tracker
+            </span>
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Health Tracker
             </span>
             <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
               <i class="fas fa-lock mr-1"></i> Chatbot
@@ -63,7 +88,7 @@
               <a href="#" id="notification-btn" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
                 <i class="fas fa-bell"></i>
                 {% if has_notifications or diet_notification or exercise_notification %}
-                  <span id="notification-indicator" class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
+                  <span id="notification-indicator" class="absolute -top-1 -right-1 h-4 w-4 rounded-full animate-pulse notification-glow"></span>
                 {% endif %}
               </a>
             </div>
@@ -359,10 +384,8 @@
         e.preventDefault();
         notificationPopup.classList.toggle('hidden');
         
-        // Remove the notification indicator when notifications are viewed
+        // Don't hide the indicator when clicking - only mark as viewed in session storage
         if (notificationIndicator) {
-          notificationIndicator.style.display = 'none';
-          
           // Store in session storage that notifications have been viewed
           sessionStorage.setItem('notificationsViewed', 'true');
         }
@@ -379,11 +402,14 @@
         }
       });
       
-      // Check if notifications have been viewed in this session
+      // Check if notifications have been viewed in this session - but don't hide the indicator
       document.addEventListener('DOMContentLoaded', function() {
+        // Remove this code that hides the indicator
+        /*
         if (notificationIndicator && sessionStorage.getItem('notificationsViewed') === 'true') {
           notificationIndicator.style.display = 'none';
         }
+        */
       });
     </script>
   </body>

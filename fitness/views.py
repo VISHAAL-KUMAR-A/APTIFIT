@@ -21,7 +21,7 @@ import os
 import openai
 import base64
 from dotenv import load_dotenv
-from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution
+from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution, HealthData
 import re
 import datetime
 
@@ -806,6 +806,10 @@ def edit_diet(request):
         'notification_message': notification_message,
     }
 
+    # Add notification when diet plan is edited
+    add_notification(
+        request, f"You've updated your diet plan for {day_display}.", "success")
+
     return render(request, 'fitness/edit_diet.html', context)
 
 
@@ -1060,6 +1064,10 @@ def diet_tracker(request):
             context['food_type'] = food_type
             # Update context with the updated daily plan
             context['daily_plan'] = daily_plan
+
+            # Add notification about the tracked meal
+            add_notification(
+                request, f"You've tracked your {food_type} for today.", "success")
 
         except Exception as e:
             messages.error(request, f"Error analyzing food: {str(e)}")
@@ -1503,3 +1511,216 @@ def view_exercise_plan(request):
         messages.warning(
             request, "You don't have an exercise plan yet. Let's create one!")
         return redirect('exercise_tracker')
+
+
+@login_required
+def health_tracker(request):
+    # Check if user profile is complete
+    user_profile = request.user.userprofile
+    profile_complete = bool(
+        user_profile.height and
+        user_profile.weight and
+        user_profile.sex and
+        user_profile.age
+    )
+
+    # If profile is incomplete, redirect to profile page with a message
+    if not profile_complete:
+        messages.warning(
+            request,
+            "Please complete your profile before using the health tracker. We need your height, weight, sex, and age to provide accurate health analysis."
+        )
+        return redirect('profile')
+
+    # Get previous health data for comparison
+    try:
+        previous_health_data = HealthData.objects.filter(
+            user=request.user).order_by('-date')[:5]
+        has_previous_data = previous_health_data.exists()
+    except:
+        previous_health_data = []
+        has_previous_data = False
+
+    if request.method == 'POST':
+        # Initialize variables
+        health_data = {}
+        health_image = request.FILES.get('health_image', None)
+
+        # Get manually entered data if provided
+        heart_rate = request.POST.get('heart_rate', None)
+        steps = request.POST.get('steps', None)
+        calories_burnt = request.POST.get('calories_burnt', None)
+        sleep_hours = request.POST.get('sleep_hours', None)
+        blood_pressure = request.POST.get('blood_pressure', None)
+
+        # Check if we have either manual data or an image
+        if health_image:
+            # Process image with AI
+            import base64
+
+            # Read the image data
+            image_data = health_image.read()
+            # Convert to base64
+            base64_image = base64.b64encode(image_data).decode('utf-8')
+
+            # Initialize the OpenAI client
+            client = openai.OpenAI(api_key=openai_api_key)
+
+            # Prepare the system message
+            system_message = """You are a health data analyzer. Extract health metrics from fitness tracker images.
+            Analyze the image for these metrics and return them in JSON format:
+            {
+                "heart_rate": numeric value or null,
+                "steps": numeric value or null,
+                "calories_burnt": numeric value or null,
+                "sleep_hours": numeric value or null,
+                "blood_pressure": string or null,
+                "additional_metrics": {any other metrics found}
+            }
+            If you can't identify a specific metric, set its value to null."""
+
+            # Prepare messages for the API call
+            content = [
+                {"type": "text", "text": "Analyze this fitness tracker image and extract health metrics."}
+            ]
+
+            # Add the image content
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/{health_image.content_type};base64,{base64_image}"
+                }
+            })
+
+            # Make the API call
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": content}
+                    ],
+                    temperature=0.7,
+                    max_tokens=500,
+                    response_format={"type": "json_object"}
+                )
+
+                # Parse the response
+                import json
+                health_data = json.loads(response.choices[0].message.content)
+
+                # Override with manual entries if provided
+                if heart_rate:
+                    health_data['heart_rate'] = int(heart_rate)
+                if steps:
+                    health_data['steps'] = int(steps)
+                if calories_burnt:
+                    health_data['calories_burnt'] = int(calories_burnt)
+                if sleep_hours:
+                    health_data['sleep_hours'] = float(sleep_hours)
+                if blood_pressure:
+                    health_data['blood_pressure'] = blood_pressure
+
+            except Exception as e:
+                messages.error(
+                    request, f"Error analyzing health data image: {str(e)}")
+                health_data = {}
+
+        elif any([heart_rate, steps, calories_burnt, sleep_hours, blood_pressure]):
+            # Process manually entered data
+            health_data = {
+                "heart_rate": int(heart_rate) if heart_rate else None,
+                "steps": int(steps) if steps else None,
+                "calories_burnt": int(calories_burnt) if calories_burnt else None,
+                "sleep_hours": float(sleep_hours) if sleep_hours else None,
+                "blood_pressure": blood_pressure if blood_pressure else None,
+                "additional_metrics": {}
+            }
+        else:
+            messages.error(
+                request, "Please provide either health metrics or upload an image.")
+            return render(request, 'fitness/health_tracker.html', {
+                'previous_data': previous_health_data,
+                'has_previous_data': has_previous_data
+            })
+
+        # Save the data to the database
+        try:
+            # Create new health data entry
+            new_health_data = HealthData.objects.create(
+                user=request.user,
+                heart_rate=health_data.get('heart_rate'),
+                steps=health_data.get('steps'),
+                calories_burnt=health_data.get('calories_burnt'),
+                sleep_hours=health_data.get('sleep_hours'),
+                blood_pressure=health_data.get('blood_pressure'),
+                additional_data=health_data.get('additional_metrics', {})
+            )
+
+            # Calculate improvements if previous data exists
+            improvements = {}
+            last_record = None
+
+            if has_previous_data:
+                last_record = previous_health_data[0]
+
+                # Calculate heart rate improvement
+                if new_health_data.heart_rate and last_record.heart_rate:
+                    # For heart rate, lower can be better if previously elevated
+                    if 60 <= new_health_data.heart_rate <= 100:
+                        if new_health_data.heart_rate < last_record.heart_rate and last_record.heart_rate > 100:
+                            improvements['heart_rate'] = f"Improved by {last_record.heart_rate - new_health_data.heart_rate} bpm"
+                        elif new_health_data.heart_rate > last_record.heart_rate and last_record.heart_rate < 60:
+                            improvements['heart_rate'] = f"Improved by {new_health_data.heart_rate - last_record.heart_rate} bpm"
+
+                # Steps improvement
+                if new_health_data.steps and last_record.steps:
+                    step_diff = new_health_data.steps - last_record.steps
+                    if step_diff > 0:
+                        improvements['steps'] = f"Increased by {step_diff} steps"
+
+                # Calories burnt improvement
+                if new_health_data.calories_burnt and last_record.calories_burnt:
+                    cal_diff = new_health_data.calories_burnt - last_record.calories_burnt
+                    if cal_diff > 0:
+                        improvements['calories_burnt'] = f"Increased by {cal_diff} calories"
+
+                # Sleep hours improvement
+                if new_health_data.sleep_hours and last_record.sleep_hours:
+                    if 7 <= new_health_data.sleep_hours <= 9:
+                        if new_health_data.sleep_hours > last_record.sleep_hours and last_record.sleep_hours < 7:
+                            improvements['sleep_hours'] = f"Improved by {new_health_data.sleep_hours - last_record.sleep_hours:.1f} hours"
+
+            # Add notification
+            improvements_text = ", ".join(
+                [f"{k.replace('_', ' ').title()}: {v}" for k, v in improvements.items()])
+            notification_text = "Health data updated successfully"
+
+            if improvements_text:
+                notification_text += f". Improvements: {improvements_text}"
+
+            add_notification(request, notification_text, "success")
+
+            messages.success(request, "Health data updated successfully!")
+
+            # Refresh the list of previous health data
+            previous_health_data = HealthData.objects.filter(
+                user=request.user).order_by('-date')[:5]
+            has_previous_data = True
+
+            return render(request, 'fitness/health_tracker.html', {
+                'current_data': new_health_data,
+                'previous_data': previous_health_data,
+                'has_previous_data': has_previous_data,
+                'improvements': improvements,
+                'last_record': last_record
+            })
+
+        except Exception as e:
+            messages.error(request, f"Error saving health data: {str(e)}")
+
+    # For GET requests or if POST fails
+    return render(request, 'fitness/health_tracker.html', {
+        'previous_data': previous_health_data,
+        'has_previous_data': has_previous_data
+    })
