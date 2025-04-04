@@ -7,6 +7,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Font Awesome for the notification icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .animate-pulse {
+        animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+    </style>
   </head>
   <body class="bg-gray-900 min-h-screen text-gray-200">
     <!-- Navigation bar -->
@@ -49,10 +62,8 @@
             <div class="relative">
               <a href="#" id="notification-btn" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
                 <i class="fas fa-bell"></i>
-                {% if notification_count > 0 %}
-                  <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {{ notification_count }}
-                  </span>
+                {% if has_notifications or diet_notification or exercise_notification %}
+                  <span id="notification-indicator" class="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
                 {% endif %}
               </a>
             </div>
@@ -342,10 +353,19 @@
       const notificationBtn = document.getElementById('notification-btn');
       const notificationPopup = document.getElementById('notification-popup');
       const closeNotification = document.getElementById('close-notification');
+      const notificationIndicator = document.getElementById('notification-indicator');
       
       notificationBtn.addEventListener('click', function(e) {
         e.preventDefault();
         notificationPopup.classList.toggle('hidden');
+        
+        // Remove the notification indicator when notifications are viewed
+        if (notificationIndicator) {
+          notificationIndicator.style.display = 'none';
+          
+          // Store in session storage that notifications have been viewed
+          sessionStorage.setItem('notificationsViewed', 'true');
+        }
       });
       
       closeNotification.addEventListener('click', function() {
@@ -356,6 +376,13 @@
       document.addEventListener('click', function(e) {
         if (!notificationPopup.contains(e.target) && e.target !== notificationBtn) {
           notificationPopup.classList.add('hidden');
+        }
+      });
+      
+      // Check if notifications have been viewed in this session
+      document.addEventListener('DOMContentLoaded', function() {
+        if (notificationIndicator && sessionStorage.getItem('notificationsViewed') === 'true') {
+          notificationIndicator.style.display = 'none';
         }
       });
     </script>
