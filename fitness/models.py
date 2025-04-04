@@ -180,6 +180,61 @@ class DailyDietPlan(models.Model):
         return f"{self.diet_plan.user.username}'s {self.get_day_of_week_display()} Diet"
 
 
+class ExercisePlan(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # beginner, intermediate, advanced
+    fitness_level = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s {self.fitness_level.title()} Exercise Plan"
+
+
+class ExerciseDay(models.Model):
+    exercise_plan = models.ForeignKey(
+        ExercisePlan, related_name='days', on_delete=models.CASCADE)
+    day = models.CharField(max_length=20)  # Monday, Tuesday, etc.
+    focus = models.CharField(max_length=100)  # Chest & Triceps, Legs, etc.
+    warmup = models.TextField()
+    cooldown = models.TextField()
+    duration = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.day}: {self.focus}"
+
+
+class Exercise(models.Model):
+    exercise_day = models.ForeignKey(
+        ExerciseDay, related_name='exercises', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    sets = models.IntegerField()
+    reps = models.CharField(max_length=20)
+    rest = models.CharField(max_length=20)
+    notes = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class ExerciseTip(models.Model):
+    exercise_plan = models.ForeignKey(
+        ExercisePlan, related_name='tips', on_delete=models.CASCADE)
+    text = models.TextField()
+
+    def __str__(self):
+        return self.text[:50]
+
+
+class ExercisePrecaution(models.Model):
+    exercise_plan = models.ForeignKey(
+        ExercisePlan, related_name='precautions', on_delete=models.CASCADE)
+    text = models.TextField()
+
+    def __str__(self):
+        return self.text[:50]
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

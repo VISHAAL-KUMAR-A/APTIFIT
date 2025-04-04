@@ -21,8 +21,9 @@ import os
 import openai
 import base64
 from dotenv import load_dotenv
-from fitness.models import DietPlan, DailyDietPlan
+from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution
 import re
+import datetime
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +33,30 @@ openai_api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_key = openai_api_key
 
 # Create your views here.
+
+
+def add_notification(request, message, category="info"):
+    """
+    Add a notification to the session
+    """
+    import datetime
+
+    if 'notifications' not in request.session:
+        request.session['notifications'] = []
+
+    # Add the new notification
+    request.session['notifications'].append({
+        'message': message,
+        'category': category,  # info, success, warning, error
+        'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'read': False
+    })
+
+    # Limit to the last 5 notifications
+    if len(request.session['notifications']) > 5:
+        request.session['notifications'] = request.session['notifications'][-5:]
+
+    request.session.modified = True
 
 
 def login_view(request):
@@ -103,6 +128,33 @@ def index(request):
             show_notification = True
             notification_message = "Here's your weekly diet plan reminder!"
 
+    # Get exercise notification from session
+    exercise_notification = None
+    exercise_notification_message = ""
+    if 'exercise_notification' in request.session:
+        exercise_notification = request.session['exercise_notification']
+        exercise_notification_message = exercise_notification['message']
+        # Optional: Remove it after showing once
+        # del request.session['exercise_notification']
+        # request.session.modified = True
+
+    # Combine exercise notification with existing notifications
+    if exercise_notification:
+        show_notification = True
+        notification_message = exercise_notification_message
+
+    # Get notifications from session
+    notifications = request.session.get('notifications', [])
+    unread_notifications = [
+        n for n in notifications if not n.get('read', False)]
+    has_unread = len(unread_notifications) > 0
+
+    # Mark all as read when viewing the page
+    if has_unread:
+        for notification in notifications:
+            notification['read'] = True
+        request.session.modified = True
+
     context = {
         'diet_plan': diet_plan,
         'daily_plan': daily_plan,
@@ -113,8 +165,10 @@ def index(request):
         'body_fat': body_fat,
         'body_fat_category': user_profile.body_fat_category,
         'daily_calories': daily_calories,
-        'has_notifications': show_notification,
+        'has_notifications': show_notification or has_unread,
         'notification_message': notification_message,
+        'notifications': notifications,
+        'exercise_notification': exercise_notification,
     }
 
     return render(request, 'fitness/index.html', context)
@@ -1005,7 +1059,7 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
         days = ['monday', 'tuesday', 'wednesday',
                 'thursday', 'friday', 'saturday', 'sunday']
         current_day_index = days.index(current_day)
-        future_days = days[current_day_index+1:] + days[:current_day_index]
+        future_days = days[current_day_index+1:] + days[:current_dayindex]
 
         # Get the user's diet plan
         diet_plan = DietPlan.objects.get(user=user)
@@ -1154,3 +1208,280 @@ def update_diet(request):
 
     # Redirect to edit_diet view with the day parameter
     return redirect(f'/edit-diet/?day={day}')
+
+
+@login_required
+def exercise_tracker(request):
+    # Check if user profile is complete
+    user_profile = request.user.userprofile
+    profile_complete = bool(
+        user_profile.height and
+        user_profile.weight and
+        user_profile.sex and
+        user_profile.age
+    )
+
+    # If profile is incomplete, redirect to profile page with a message
+    if not profile_complete:
+        messages.warning(
+            request,
+            "Please complete your profile before using the exercise tracker. We need your height, weight, sex, and age to provide personalized exercise recommendations."
+        )
+        return redirect('profile')
+
+    # Check if user already has a saved exercise plan
+    try:
+        exercise_plan_obj = ExercisePlan.objects.get(user=request.user)
+        # User already has a plan, check if they want to create a new one
+        if request.GET.get('new_plan') == 'true' or request.method == 'POST':
+            # Will generate a new plan below
+            pass
+        else:
+            # Prepare existing plan for template
+            exercise_plan = {
+                'schedule': [],
+                'tips': [tip.text for tip in exercise_plan_obj.tips.all()],
+                'precautions': [precaution.text for precaution in exercise_plan_obj.precautions.all()]
+            }
+
+            # Add days to the schedule
+            for day in exercise_plan_obj.days.all().order_by('id'):
+                day_dict = {
+                    'day': day.day,
+                    'focus': day.focus,
+                    'warmup': day.warmup,
+                    'cooldown': day.cooldown,
+                    'duration': day.duration,
+                    'exercises': []
+                }
+
+                # Add exercises to each day
+                for exercise in day.exercises.all():
+                    day_dict['exercises'].append({
+                        'name': exercise.name,
+                        'sets': exercise.sets,
+                        'reps': exercise.reps,
+                        'rest': exercise.rest,
+                        'notes': exercise.notes
+                    })
+
+                exercise_plan['schedule'].append(day_dict)
+
+            return render(request, 'fitness/exercise_tracker.html', {
+                'exercise_plan': exercise_plan,
+                'fitness_level': exercise_plan_obj.fitness_level,
+                'created_at': exercise_plan_obj.created_at,
+                'last_updated': exercise_plan_obj.last_updated,
+            })
+    except ExercisePlan.DoesNotExist:
+        # No existing plan, will generate a new one if POST
+        pass
+
+    if request.method == 'POST':
+        fitness_level = request.POST.get('fitness_level')
+        if fitness_level in ['beginner', 'intermediate', 'advanced']:
+            # Get user profile data for personalized recommendations
+            height = user_profile.height
+            weight = user_profile.weight
+            sex = user_profile.sex
+            age = user_profile.age
+            bmi = user_profile.bmi
+            bmi_category = user_profile.bmi_category
+            body_fat = user_profile.body_fat
+            body_fat_category = user_profile.body_fat_category
+
+            # Get API key from environment
+            api_key = os.environ.get("OPENAI_API_KEY")
+
+            # Initialize the OpenAI client
+            client = openai.OpenAI(api_key=api_key)
+
+            # Create a simpler prompt to avoid JSON parsing issues
+            prompt = f"""
+                Generate a personalized gym exercise plan for a {fitness_level} level user with the following profile:
+                - Height: {height} cm
+                - Weight: {weight} kg
+                - Sex: {sex}
+                - Age: {age} years
+                - BMI: {bmi} ({bmi_category})
+                - Body Fat: {body_fat}% ({body_fat_category})
+
+            This plan should be tailored to their fitness level ({fitness_level}) and account for their body metrics.
+            
+            Include a 5-day weekly schedule (Monday-Friday) with specific exercises, sets, reps, rest periods, 
+            warm-ups, cool-downs, and duration for each day.
+            
+            Format your response as clean, valid JSON with this structure:
+                {{
+                    "schedule": [
+                        {{
+                            "day": "Monday",
+                        "focus": "Chest and Triceps",
+                            "exercises": [
+                                {{
+                                "name": "Bench Press",
+                                    "sets": 3,
+                                "reps": "8-10",
+                                "rest": "90 seconds",
+                                "notes": "Keep shoulders back"
+                            }}
+                        ],
+                        "warmup": "5 minutes cardio plus dynamic stretching",
+                        "cooldown": "Static stretching for chest and arms",
+                        "duration": "45 minutes"
+                    }}
+                ],
+                "tips": ["Tip 1", "Tip 2", "Tip 3"],
+                "precautions": ["Precaution 1", "Precaution 2"]
+            }}
+
+            Return ONLY the JSON with NO additional text or formatting.
+            """
+
+            try:
+                # Generate exercise plan with structured prompt
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "You are a fitness expert that outputs only clean, valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=2000,
+                    # Explicitly request JSON format
+                    response_format={"type": "json_object"}
+                )
+
+                # Get the response content
+                ai_response = response.choices[0].message.content
+
+                # Try to parse JSON
+                import json
+
+                try:
+                    # Direct parsing
+                    exercise_plan = json.loads(ai_response)
+
+                    # Delete any existing plan
+                    ExercisePlan.objects.filter(user=request.user).delete()
+
+                    # Create a new plan in the database
+                    exercise_plan_obj = ExercisePlan.objects.create(
+                        user=request.user,
+                        fitness_level=fitness_level
+                    )
+
+                    # Add days
+                    for day_data in exercise_plan['schedule']:
+                        day = ExerciseDay.objects.create(
+                            exercise_plan=exercise_plan_obj,
+                            day=day_data['day'],
+                            focus=day_data['focus'],
+                            warmup=day_data['warmup'],
+                            cooldown=day_data['cooldown'],
+                            duration=day_data['duration']
+                        )
+
+                        # Add exercises for each day
+                        for exercise_data in day_data['exercises']:
+                            Exercise.objects.create(
+                                exercise_day=day,
+                                name=exercise_data['name'],
+                                sets=exercise_data['sets'],
+                                reps=exercise_data['reps'],
+                                rest=exercise_data['rest'],
+                                notes=exercise_data.get('notes', '')
+                            )
+
+                    # Add tips
+                    for tip in exercise_plan['tips']:
+                        ExerciseTip.objects.create(
+                            exercise_plan=exercise_plan_obj,
+                            text=tip
+                        )
+
+                    # Add precautions
+                    for precaution in exercise_plan['precautions']:
+                        ExercisePrecaution.objects.create(
+                            exercise_plan=exercise_plan_obj,
+                            text=precaution
+                        )
+
+                    # Add a notification to the session
+                    add_notification(
+                        request,
+                        f"Your personalized {fitness_level} exercise plan has been created!",
+                        "success"
+                    )
+
+                    messages.success(
+                        request, "Your personalized exercise plan has been created!")
+
+                    # Redirect to plan display page
+                    return redirect('view_exercise_plan')
+
+                except json.JSONDecodeError as e:
+                    messages.error(
+                        request, "Error creating exercise plan. Please try again.")
+                    return redirect('exercise_tracker')
+
+            except Exception as e:
+                messages.error(
+                    request, "Error connecting to our fitness expert. Please try again later.")
+                return redirect('exercise_tracker')
+
+    # Display the form if no POST or GET or no existing plan
+    return render(request, 'fitness/exercise_tracker.html', {
+        'exercise_plan': None,
+        'fitness_level': None
+    })
+
+
+@login_required
+def view_exercise_plan(request):
+    """View to display the saved exercise plan"""
+    try:
+        # Get the user's exercise plan
+        exercise_plan_obj = ExercisePlan.objects.get(user=request.user)
+
+        # Prepare plan for template
+        exercise_plan = {
+            'schedule': [],
+            'tips': [tip.text for tip in exercise_plan_obj.tips.all()],
+            'precautions': [precaution.text for precaution in exercise_plan_obj.precautions.all()]
+        }
+
+        # Add days to the schedule
+        for day in exercise_plan_obj.days.all().order_by('id'):
+            day_dict = {
+                'day': day.day,
+                'focus': day.focus,
+                'warmup': day.warmup,
+                'cooldown': day.cooldown,
+                'duration': day.duration,
+                'exercises': []
+            }
+
+            # Add exercises to each day
+            for exercise in day.exercises.all():
+                day_dict['exercises'].append({
+                    'name': exercise.name,
+                    'sets': exercise.sets,
+                    'reps': exercise.reps,
+                    'rest': exercise.rest,
+                    'notes': exercise.notes
+                })
+
+            exercise_plan['schedule'].append(day_dict)
+
+        return render(request, 'fitness/view_exercise_plan.html', {
+            'exercise_plan': exercise_plan,
+            'fitness_level': exercise_plan_obj.fitness_level,
+            'created_at': exercise_plan_obj.created_at,
+            'last_updated': exercise_plan_obj.last_updated,
+        })
+
+    except ExercisePlan.DoesNotExist:
+        messages.warning(
+            request, "You don't have an exercise plan yet. Let's create one!")
+        return redirect('exercise_tracker')

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Exercise Plan</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Home
+            </a>
+            
+            <a href="{% url 'diet_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Diet Tracker
+            </a>
+            <a href="{% url 'exercise_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-700 text-white">
+              Exercise Tracker
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Chatbot
+            </a>
+            
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Profile: {{ user.username }}
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="container mx-auto px-4 py-8">
+      <!-- Page Header -->
+      <div class="mb-8">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-white mb-2">Your {{ fitness_level|title }} Exercise Plan</h1>
+            <p class="text-gray-400">Personalized workout plan based on your fitness profile</p>
+          </div>
+          <a href="{% url 'exercise_tracker' %}?new_plan=true" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition duration-300">
+            <i class="fas fa-sync-alt mr-1"></i> Create New Plan
+          </a>
+        </div>
+        
+        <!-- Plan date indicator -->
+        <div class="text-sm text-gray-400 mt-4">
+          <span><i class="fas fa-calendar-alt mr-1"></i> Plan created: {{ created_at|date:"F j, Y" }}</span>
+          {% if last_updated != created_at %}
+          <span class="ml-4"><i class="fas fa-edit mr-1"></i> Last updated: {{ last_updated|date:"F j, Y" }}</span>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- User Fitness Stats Quick View -->
+      <div class="bg-gray-800 rounded-lg p-4 mb-8 border border-gray-700">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="text-center p-3 bg-gray-700 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-400">BMI</h3>
+            <p class="text-xl font-bold">{{ user.userprofile.bmi|default:"--" }}</p>
+            <p class="text-sm text-gray-400">{{ user.userprofile.bmi_category|default:"Complete profile" }}</p>
+          </div>
+          <div class="text-center p-3 bg-gray-700 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-400">Body Fat</h3>
+            <p class="text-xl font-bold">{{ user.userprofile.body_fat|default:"--" }}%</p>
+            <p class="text-sm text-gray-400">{{ user.userprofile.body_fat_category|default:"Complete profile" }}</p>
+          </div>
+          <div class="text-center p-3 bg-gray-700 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-400">Weight</h3>
+            <p class="text-xl font-bold">{{ user.userprofile.weight|default:"--" }} kg</p>
+          </div>
+          <div class="text-center p-3 bg-gray-700 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-400">Age</h3>
+            <p class="text-xl font-bold">{{ user.userprofile.age|default:"--" }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Exercise Plan Results -->
+      <div class="mb-8">
+        <!-- Days tabs -->
+        <div class="mb-6">
+          <div class="flex overflow-x-auto bg-gray-800 rounded-t-lg border border-gray-700">
+            {% for day_plan in exercise_plan.schedule %}
+            <button 
+              class="day-tab px-4 py-3 text-sm font-medium transition duration-300 {% if forloop.first %}active-tab bg-blue-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %}"
+              data-day="{{ day_plan.day|lower }}"
+            >
+              {{ day_plan.day }}
+              <span class="block text-xs mt-1 font-normal">{{ day_plan.focus }}</span>
+            </button>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <!-- Day content -->
+        {% for day_plan in exercise_plan.schedule %}
+        <div 
+          id="day-{{ day_plan.day|lower }}" 
+          class="day-content bg-gray-800 rounded-lg border border-gray-700 p-6 mb-6 {% if not forloop.first %}hidden{% endif %}"
+        >
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">{{ day_plan.day }}: {{ day_plan.focus }}</h3>
+            <span class="bg-blue-900 text-white text-xs px-3 py-1 rounded-full">{{ day_plan.duration }}</span>
+          </div>
+          
+          <!-- Warm-up -->
+          <div class="mb-6">
+            <h4 class="text-blue-400 font-semibold mb-2">Warm-up</h4>
+            <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+              <p>{{ day_plan.warmup }}</p>
+            </div>
+          </div>
+          
+          <!-- Exercises -->
+          <div class="mb-6">
+            <h4 class="text-blue-400 font-semibold mb-2">Exercises</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {% for exercise in day_plan.exercises %}
+              <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                <h5 class="font-bold mb-2">{{ exercise.name }}</h5>
+                <div class="grid grid-cols-3 gap-2 mb-2 text-sm">
+                  <div class="bg-gray-800 p-2 rounded text-center">
+                    <span class="block text-gray-400 text-xs">Sets</span>
+                    <span>{{ exercise.sets }}</span>
+                  </div>
+                  <div class="bg-gray-800 p-2 rounded text-center">
+                    <span class="block text-gray-400 text-xs">Reps</span>
+                    <span>{{ exercise.reps }}</span>
+                  </div>
+                  <div class="bg-gray-800 p-2 rounded text-center">
+                    <span class="block text-gray-400 text-xs">Rest</span>
+                    <span>{{ exercise.rest }}</span>
+                  </div>
+                </div>
+                {% if exercise.notes %}
+                <p class="text-sm text-gray-300 mt-2"><span class="text-blue-400">Note:</span> {{ exercise.notes }}</p>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          
+          <!-- Cool-down -->
+          <div>
+            <h4 class="text-blue-400 font-semibold mb-2">Cool-down</h4>
+            <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+              <p>{{ day_plan.cooldown }}</p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Tips and Precautions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <!-- Tips -->
+          <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div class="bg-blue-800 text-white p-4">
+              <h3 class="text-lg font-bold">Training Tips</h3>
+            </div>
+            <div class="p-5">
+              <ul class="space-y-3 text-gray-300">
+                {% for tip in exercise_plan.tips %}
+                <li class="flex items-start">
+                  <span class="text-blue-400 mr-2">•</span>
+                  <span>{{ tip }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Precautions -->
+          <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+            <div class="bg-red-800 text-white p-4">
+              <h3 class="text-lg font-bold">Important Precautions</h3>
+            </div>
+            <div class="p-5">
+              <ul class="space-y-3 text-gray-300">
+                {% for precaution in exercise_plan.precautions %}
+                <li class="flex items-start">
+                  <span class="text-red-400 mr-2">•</span>
+                  <span>{{ precaution }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-8">
+        <a href="{% url 'exercise_tracker' %}" class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition duration-300">
+          <i class="fas fa-arrow-left mr-2"></i> Back to Exercise Tracker
+        </a>
+      </div>
+    </div>
+    
+    <!-- JavaScript for tab functionality -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Get all tabs and content
+        const tabs = document.querySelectorAll('.day-tab');
+        const contents = document.querySelectorAll('.day-content');
+        
+        // Add click event to each tab
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            const day = tab.getAttribute('data-day');
+            
+            // Hide all content and remove active class from tabs
+            contents.forEach(content => {
+              content.classList.add('hidden');
+            });
+            tabs.forEach(t => {
+              t.classList.remove('active-tab', 'bg-blue-900', 'text-white');
+              t.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            });
+            
+            // Show selected content and add active class to clicked tab
+            document.getElementById(`day-${day}`).classList.remove('hidden');
+            tab.classList.add('active-tab', 'bg-blue-900', 'text-white');
+            tab.classList.remove('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+          });
+        });
+      });
+    </script>
+  </body>
+</html> 
