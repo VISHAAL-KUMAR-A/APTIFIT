@@ -112,36 +112,42 @@ def index(request):
     # Get daily calorie needs from user profile
     daily_calories = user_profile.daily_calorie_needs
 
-    # Check if user should see notifications based on preferences
-    show_notification = False
-    notification_message = ""
+    # Check for user notification preferences
+    notification_preference = request.user.userprofile.notification_preference
 
-    if user_profile.notification_preference != 'none':
-        today = datetime.datetime.now()
-
-        if user_profile.notification_preference == 'daily':
-            # Show notification every day
-            show_notification = True
-            notification_message = f"Remember to follow your {today.strftime('%A')} diet plan!"
-        elif user_profile.notification_preference == 'weekly' and today.weekday() == 0:  # Monday
-            # Show notification only on Mondays for weekly preference
-            show_notification = True
-            notification_message = "Here's your weekly diet plan reminder!"
-
-    # Get exercise notification from session
+    # Initialize notification variables
+    diet_notification = None
     exercise_notification = None
-    exercise_notification_message = ""
-    if 'exercise_notification' in request.session:
-        exercise_notification = request.session['exercise_notification']
-        exercise_notification_message = exercise_notification['message']
-        # Optional: Remove it after showing once
-        # del request.session['exercise_notification']
-        # request.session.modified = True
 
-    # Combine exercise notification with existing notifications
-    if exercise_notification:
-        show_notification = True
-        notification_message = exercise_notification_message
+    if notification_preference == 'daily':
+        # Get current day of week
+        import datetime
+        current_weekday = datetime.datetime.now().strftime('%A').lower()
+
+        # Diet notification (this is likely what's already there)
+        diet_notification = f"Remember to follow your {current_day} diet plan!"
+
+        # Exercise notification - completely separate from diet notification
+        if hasattr(request.user, 'exerciseplan'):
+            exercise_plan = request.user.exerciseplan
+            today_exercise = None
+
+            # Find if there's an exercise scheduled for today
+            for day in exercise_plan.days.all():
+                if day.day.lower() == current_weekday:
+                    today_exercise = day
+                    break
+
+            if today_exercise:
+                exercise_notification = {
+                    'message': f"Don't forget today's {today_exercise.focus} workout! ({today_exercise.duration})",
+                    'timestamp': 'Today'
+                }
+            else:
+                exercise_notification = {
+                    'message': "Remember to check your exercise plan for today!",
+                    'timestamp': 'Today'
+                }
 
     # Get notifications from session
     notifications = request.session.get('notifications', [])
@@ -155,6 +161,7 @@ def index(request):
             notification['read'] = True
         request.session.modified = True
 
+    # Add notifications to context
     context = {
         'diet_plan': diet_plan,
         'daily_plan': daily_plan,
@@ -165,11 +172,22 @@ def index(request):
         'body_fat': body_fat,
         'body_fat_category': user_profile.body_fat_category,
         'daily_calories': daily_calories,
-        'has_notifications': show_notification or has_unread,
-        'notification_message': notification_message,
-        'notifications': notifications,
+        'diet_notification': diet_notification,
         'exercise_notification': exercise_notification,
+        'notification_preference': notification_preference,
+        'notifications': notifications,
     }
+
+    # Update notification count logic
+    has_notifications = diet_notification is not None or exercise_notification is not None
+    context['has_notifications'] = has_notifications
+
+    if notifications:
+        context['notification_count'] = len(
+            notifications) + (1 if exercise_notification else 0)
+    elif has_notifications:
+        context['notification_count'] = (
+            1 if diet_notification else 0) + (1 if exercise_notification else 0)
 
     return render(request, 'fitness/index.html', context)
 

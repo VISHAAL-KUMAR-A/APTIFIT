@@ -49,17 +49,9 @@
             <div class="relative">
               <a href="#" id="notification-btn" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
                 <i class="fas fa-bell"></i>
-                {% if notifications %}
-                  {% with notification_count=notifications|length %}
-                    {% if notification_count > 0 %}
-                      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {{ notification_count }}
-                      </span>
-                    {% endif %}
-                  {% endwith %}
-                {% elif has_notifications or exercise_notification %}
+                {% if notification_count > 0 %}
                   <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    1
+                    {{ notification_count }}
                   </span>
                 {% endif %}
               </a>
@@ -298,23 +290,43 @@
       <div id="notification-content" class="p-4">
         {% if notifications %}
           {% for notification in notifications %}
-            <div class="notification-item py-2 {% if not forloop.last %}border-b border-gray-700{% endif %}">
+            <div class="notification-item py-2 {% if not forloop.last or diet_notification or exercise_notification %}border-b border-gray-700{% endif %}">
               <p class="{% if notification.category == 'success' %}text-green-400{% elif notification.category == 'warning' %}text-yellow-400{% elif notification.category == 'error' %}text-red-400{% else %}text-gray-200{% endif %}">
                 {{ notification.message }}
               </p>
               <p class="text-xs text-gray-400 mt-1">{{ notification.timestamp }}</p>
             </div>
           {% endfor %}
-        {% elif has_notifications %}
-          <div class="notification-item py-2 border-b border-gray-700">
-            <p>{{ notification_message }}</p>
-            <p class="text-xs text-gray-400 mt-1">Today</p>
-          </div>
-        {% elif exercise_notification %}
-          <div class="notification-item py-2 border-b border-gray-700">
-            <p>{{ exercise_notification.message }}</p>
-            <p class="text-xs text-gray-400 mt-1">{{ exercise_notification.timestamp }}</p>
-          </div>
+          
+          <!-- Show diet and exercise notifications after regular notifications -->
+          {% if diet_notification %}
+            <div class="notification-item py-2 {% if exercise_notification %}border-b border-gray-700{% endif %}">
+              <p><i class="fas fa-utensils mr-2 text-green-400"></i>{{ diet_notification }}</p>
+              <p class="text-xs text-gray-400 mt-1">Today</p>
+            </div>
+          {% endif %}
+          
+          {% if exercise_notification %}
+            <div class="notification-item py-2">
+              <p><i class="fas fa-dumbbell mr-2 text-blue-400"></i>{{ exercise_notification.message }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ exercise_notification.timestamp }}</p>
+            </div>
+          {% endif %}
+          
+        {% elif diet_notification or exercise_notification %}
+          {% if diet_notification %}
+            <div class="notification-item py-2 {% if exercise_notification %}border-b border-gray-700{% endif %}">
+              <p><i class="fas fa-utensils mr-2 text-green-400"></i>{{ diet_notification }}</p>
+              <p class="text-xs text-gray-400 mt-1">Today</p>
+            </div>
+          {% endif %}
+          
+          {% if exercise_notification %}
+            <div class="notification-item py-2">
+              <p><i class="fas fa-dumbbell mr-2 text-blue-400"></i>{{ exercise_notification.message }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ exercise_notification.timestamp }}</p>
+            </div>
+          {% endif %}
         {% else %}
           <div class="text-center py-3">
             <i class="fas fa-bell-slash text-gray-500 text-2xl mb-2"></i>
