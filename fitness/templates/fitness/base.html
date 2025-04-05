@@ -1,14 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    {% block styles %}{% endblock %}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}AptiFit{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .animate-pulse {
+        animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      
+      @keyframes glow {
+        0% {
+          box-shadow: 0 0 3px 1px rgba(253, 126, 20, 0.4), 0 0 5px 2px rgba(239, 68, 68, 0.4);
+          box-shadow: 0 0 5px 2px rgba(253, 126, 20, 0.6), 0 0 8px 4px rgba(239, 68, 68, 0.6);
+        }
+        50% {
+          box-shadow: 0 0 10px 5px rgba(253, 126, 20, 0.9), 0 0 15px 7px rgba(239, 68, 68, 0.8);
+        }
+        100% {
+          box-shadow: 0 0 5px 2px rgba(253, 126, 20, 0.6), 0 0 8px 4px rgba(239, 68, 68, 0.6);
+        }
+      }
+      .notification-glow {
+        animation: glow 2s ease-in-out infinite;
+        background: rgb(239, 68, 68);
+        background: linear-gradient(45deg, rgba(239, 68, 68, 1) 0%, rgba(253, 126, 20, 1) 100%);
+        z-index: 10;
+      }
+      {% block additional_styles %}{% endblock %}
+    </style>
   </head>
-  <body>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/' %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Home
+            </a>
+            
+            {% if user.userprofile.height and user.userprofile.weight and user.userprofile.sex and user.userprofile.age %}
+            <a href="{% url 'diet_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if '/diet_tracker/' in request.path %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Diet Tracker
+            </a>
+            <a href="{% url 'exercise_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if '/exercise_tracker/' in request.path %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Exercise Tracker
+            </a>
+            <a href="{% url 'health_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if '/health_tracker/' in request.path %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Health Tracker
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if '/chatbot/' in request.path %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Chatbot
+            </a>
+            {% else %}
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Diet Tracker
+            </span>
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Exercise Tracker
+            </span>
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Health Tracker
+            </span>
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed" title="Complete your profile to unlock this feature">
+              <i class="fas fa-lock mr-1"></i> Chatbot
+            </span>
+            {% endif %}
+            
+            <a href="{% url 'community' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if '/community/' in request.path %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Community
+            </a>
+            
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if '/profile/' in request.path %}bg-gray-700 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} transition duration-300">
+              Profile: {{ user.username }}
+            </a>
+            <div class="relative">
+              <a href="#" id="notification-btn" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+                <i class="fas fa-bell"></i>
+                {% if has_notifications or diet_notification or exercise_notification %}
+                  <span id="notification-indicator" class="absolute -top-1 -right-1 h-4 w-4 rounded-full animate-pulse notification-glow"></span>
+                {% endif %}
+              </a>
+            </div>
+            <a href="{% url 'change_password' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Change Password
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
     {% block content %}{% endblock %}
+
+    <!-- Notification popup -->
+    <div id="notification-popup" class="hidden fixed top-20 right-4 w-80 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden z-50">
+      <div class="bg-blue-800 text-white p-3 flex justify-between items-center">
+        <h3 class="font-bold">Notifications</h3>
+        <button id="close-notification" class="text-white hover:text-gray-300 transition duration-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="notification-content" class="p-4">
+        {% if notifications %}
+          {% for notification in notifications %}
+            <div class="notification-item py-2 {% if not forloop.last or diet_notification or exercise_notification %}border-b border-gray-700{% endif %}">
+              <p class="{% if notification.category == 'success' %}text-green-400{% elif notification.category == 'warning' %}text-yellow-400{% elif notification.category == 'error' %}text-red-400{% else %}text-gray-200{% endif %}">
+                {{ notification.message }}
+              </p>
+              <p class="text-xs text-gray-400 mt-1">{{ notification.timestamp }}</p>
+            </div>
+          {% endfor %}
+          
+          <!-- Show diet and exercise notifications after regular notifications -->
+          {% if diet_notification %}
+            <div class="notification-item py-2 {% if exercise_notification %}border-b border-gray-700{% endif %}">
+              <p><i class="fas fa-utensils mr-2 text-green-400"></i>{{ diet_notification }}</p>
+              <p class="text-xs text-gray-400 mt-1">Today</p>
+            </div>
+          {% endif %}
+          
+          {% if exercise_notification %}
+            <div class="notification-item py-2">
+              <p><i class="fas fa-dumbbell mr-2 text-blue-400"></i>{{ exercise_notification.message }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ exercise_notification.timestamp }}</p>
+            </div>
+          {% endif %}
+          
+        {% elif diet_notification or exercise_notification %}
+          {% if diet_notification %}
+            <div class="notification-item py-2 {% if exercise_notification %}border-b border-gray-700{% endif %}">
+              <p><i class="fas fa-utensils mr-2 text-green-400"></i>{{ diet_notification }}</p>
+              <p class="text-xs text-gray-400 mt-1">Today</p>
+            </div>
+          {% endif %}
+          
+          {% if exercise_notification %}
+            <div class="notification-item py-2">
+              <p><i class="fas fa-dumbbell mr-2 text-blue-400"></i>{{ exercise_notification.message }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ exercise_notification.timestamp }}</p>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="text-center py-3">
+            <i class="fas fa-bell-slash text-gray-500 text-2xl mb-2"></i>
+            <p class="text-gray-400">No new notifications</p>
+            <p class="text-xs text-gray-500 mt-2">Check back later for updates on your fitness journey</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <script>
+      // Notification popup functionality
+      const notificationBtn = document.getElementById('notification-btn');
+      const notificationPopup = document.getElementById('notification-popup');
+      const closeNotification = document.getElementById('close-notification');
+      const notificationIndicator = document.getElementById('notification-indicator');
+      
+      notificationBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        notificationPopup.classList.toggle('hidden');
+        
+        // Don't hide the indicator when clicking - only mark as viewed in session storage
+        if (notificationIndicator) {
+          // Store in session storage that notifications have been viewed
+          sessionStorage.setItem('notificationsViewed', 'true');
+        }
+      });
+      
+      closeNotification.addEventListener('click', function() {
+        notificationPopup.classList.add('hidden');
+      });
+      
+      // Close popup when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!notificationPopup.contains(e.target) && e.target !== notificationBtn) {
+          notificationPopup.classList.add('hidden');
+        }
+      });
+    </script>
+    
     {% block scripts %}{% endblock %}
   </body>
 </html>

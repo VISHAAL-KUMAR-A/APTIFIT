@@ -21,9 +21,10 @@ import os
 import openai
 import base64
 from dotenv import load_dotenv
-from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution, HealthData
+from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution, HealthData, CommunityMessage
 import re
 import datetime
+from django.db.models import Q
 
 # Load environment variables
 load_dotenv()
@@ -1724,3 +1725,94 @@ def health_tracker(request):
         'previous_data': previous_health_data,
         'has_previous_data': has_previous_data
     })
+
+
+@login_required
+def community(request):
+    """View for the community page"""
+    user = request.user
+    context = {}
+
+    # If the user is a superuser, get all users for the left panel
+    if user.is_superuser:
+        all_users = User.objects.exclude(id=user.id).order_by('username')
+        context['all_users'] = all_users
+
+        # If a specific user is selected, get chat with that user
+        selected_user_id = request.GET.get('user_id')
+        if selected_user_id:
+            try:
+                selected_user = User.objects.get(id=selected_user_id)
+                context['selected_user'] = selected_user
+
+                # Get messages between superuser and selected user (both directions)
+                chat_messages = CommunityMessage.objects.filter(
+                    (Q(sender=user) & Q(receiver=selected_user)) |
+                    (Q(sender=selected_user) & Q(receiver=user))
+                ).order_by('timestamp')
+
+                # Mark messages as read
+                unread_messages = chat_messages.filter(
+                    receiver=user, is_read=False)
+                unread_messages.update(is_read=True)
+
+                context['chat_messages'] = chat_messages
+            except User.DoesNotExist:
+                pass
+    else:
+        # For normal users, show chat with admin (superuser)
+        admin_users = User.objects.filter(is_superuser=True)
+
+        if admin_users.exists():
+            admin_user = admin_users.first()
+            context['admin_user'] = admin_user
+
+            # Get messages between user and admin (both directions)
+            chat_messages = CommunityMessage.objects.filter(
+                (Q(sender=user) & Q(receiver=admin_user)) |
+                (Q(sender=admin_user) & Q(receiver=user))
+            ).order_by('timestamp')
+
+            # Mark messages as read
+            unread_messages = chat_messages.filter(
+                receiver=user, is_read=False)
+            unread_messages.update(is_read=True)
+
+            context['chat_messages'] = chat_messages
+
+    return render(request, 'fitness/community.html', context)
+
+
+@login_required
+def send_message(request):
+    """View to handle sending messages in the community"""
+    if request.method == 'POST':
+        message_text = request.POST.get('message')
+        receiver_id = request.POST.get('receiver_id')
+
+        if not message_text:
+            messages.error(request, "Message cannot be empty")
+            return redirect('community')
+
+        try:
+            receiver = User.objects.get(id=receiver_id)
+
+            # Create and save the message
+            message = CommunityMessage(
+                sender=request.user,
+                receiver=receiver,
+                message=message_text
+            )
+            message.save()
+
+            # Redirect back to the conversation
+            if request.user.is_superuser:
+                return redirect(f'/community/?user_id={receiver_id}')
+            else:
+                return redirect('community')
+
+        except User.DoesNotExist:
+            messages.error(request, "User not found")
+            return redirect('community')
+
+    return redirect('community')

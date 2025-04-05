@@ -1,0 +1,121 @@
+{% extends 'fitness/base.html' %}
+
+{% block title %}Community{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-white mb-6">Community</h1>
+  
+  <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+    <div class="bg-blue-800 text-white p-4">
+      <h2 class="text-xl font-bold">{% if user.is_superuser %}Admin Dashboard{% else %}Chat with Admin{% endif %}</h2>
+    </div>
+    
+    <div class="grid grid-cols-1 {% if user.is_superuser %}md:grid-cols-4{% endif %}">
+      <!-- Left panel for superuser to show all users -->
+      {% if user.is_superuser %}
+      <div class="md:col-span-1 border-r border-gray-700">
+        <div class="p-4 bg-gray-700">
+          <h3 class="font-medium text-white">Users</h3>
+        </div>
+        <div class="overflow-y-auto max-h-[70vh]">
+          <ul>
+            {% for other_user in all_users %}
+            <li>
+              <a href="{% url 'community' %}?user_id={{ other_user.id }}" 
+                 class="block px-4 py-3 hover:bg-gray-700 {% if selected_user.id == other_user.id %}bg-gray-700{% endif %} border-b border-gray-700 transition duration-300">
+                <div class="flex items-center">
+                  <div class="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center text-white font-medium mr-3">
+                    {{ other_user.username|first|upper }}
+                  </div>
+                  <div class="text-gray-200">{{ other_user.username }}</div>
+                </div>
+              </a>
+            </li>
+            {% empty %}
+            <li class="px-4 py-3 text-gray-400">No users found</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Right panel for chat -->
+      <div class="{% if user.is_superuser %}md:col-span-3{% endif %} flex flex-col h-[70vh]">
+        <!-- Chat header -->
+        <div class="p-4 bg-gray-700 border-b border-gray-600 flex items-center">
+          {% if user.is_superuser %}
+            {% if selected_user %}
+              <div class="bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium mr-3">
+                {{ selected_user.username|first|upper }}
+              </div>
+              <h3 class="font-medium text-white">{{ selected_user.username }}</h3>
+            {% else %}
+              <h3 class="font-medium text-gray-400">Select a user to start chatting</h3>
+            {% endif %}
+          {% else %}
+            {% if admin_user %}
+              <div class="bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium mr-3">
+                {{ admin_user.username|first|upper }}
+              </div>
+              <h3 class="font-medium text-white">{{ admin_user.username }}</h3>
+            {% else %}
+              <h3 class="font-medium text-gray-400">No admin available</h3>
+            {% endif %}
+          {% endif %}
+        </div>
+        
+        <!-- Chat messages -->
+        <div class="flex-1 p-4 overflow-y-auto bg-gray-800" id="chat-messages">
+          {% if chat_messages %}
+            {% for message in chat_messages %}
+              <div class="mb-4 {% if message.sender == user %}flex justify-end{% endif %}">
+                <div class="{% if message.sender == user %}bg-blue-600 text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg{% else %}bg-gray-700 text-gray-200 rounded-tr-lg rounded-tl-lg rounded-br-lg{% endif %} py-2 px-4 max-w-[80%]">
+                  <p>{{ message.message }}</p>
+                  <p class="text-xs {% if message.sender == user %}text-blue-200{% else %}text-gray-400{% endif %} mt-1 text-right">
+                    {{ message.timestamp|date:"M d, g:i a" }}
+                  </p>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            {% if user.is_superuser and not selected_user %}
+              <div class="flex items-center justify-center h-full">
+                <p class="text-gray-400">Select a user to start chatting</p>
+              </div>
+            {% else %}
+              <div class="flex items-center justify-center h-full">
+                <p class="text-gray-400">No messages yet. Start the conversation!</p>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+        
+        <!-- Message input -->
+        <div class="p-4 border-t border-gray-700">
+          {% if user.is_superuser and selected_user or not user.is_superuser and admin_user %}
+            <form method="post" action="{% url 'send_message' %}" class="flex items-center">
+              {% csrf_token %}
+              <input type="hidden" name="receiver_id" value="{% if user.is_superuser %}{{ selected_user.id }}{% else %}{{ admin_user.id }}{% endif %}">
+              <input type="text" name="message" placeholder="Type your message..." class="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg transition duration-300">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-scroll to bottom of chat when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  });
+</script>
+{% endblock %} 

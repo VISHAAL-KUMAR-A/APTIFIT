@@ -283,6 +283,25 @@ class HealthData(models.Model):
             return "Excessive"
 
 
+class CommunityMessage(models.Model):
+    sender = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        if self.receiver:
+            return f"Message from {self.sender.username} to {self.receiver.username}"
+        else:
+            return f"Message from {self.sender.username} to all users"
+
+    class Meta:
+        ordering = ['-timestamp']
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

@@ -45,4 +45,6 @@ urlpatterns = [
     path('view-exercise-plan/', views.view_exercise_plan,
          name='view_exercise_plan'),
     path('health-tracker/', views.health_tracker, name='health_tracker'),
+    path('community/', views.community, name='community'),
+    path('send-message/', views.send_message, name='send_message'),
 ]
