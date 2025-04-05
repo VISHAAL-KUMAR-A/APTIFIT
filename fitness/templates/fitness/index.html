@@ -146,6 +146,9 @@
               <a href="{% url 'index' %}?day=saturday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Saturday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
                 Saturday
               </a>
+              <a href="{% url 'index' %}?day=sunday" class="px-4 py-2 text-sm font-medium {% if current_day == 'Sunday' %}bg-gray-600 text-white{% else %}text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} transition duration-300">
+                Sunday
+              </a>
             </div>
             {% endif %}
             

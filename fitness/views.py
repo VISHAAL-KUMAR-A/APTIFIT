@@ -563,7 +563,7 @@ def chatbot(request):
                 model="gpt-4o",  # Updated to the current model that supports vision
                 messages=messages,
                 temperature=0.7,
-                max_tokens=500,
+                max_tokens=2000,
             )
 
             # Extract the response content
@@ -1165,7 +1165,7 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
                     model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.7,
-                    max_tokens=1000,
+                    max_tokens=2000,
                 )
 
                 # Extract JSON from response
@@ -1334,7 +1334,7 @@ def exercise_tracker(request):
 
             This plan should be tailored to their fitness level ({fitness_level}) and account for their body metrics.
             
-            Include a 5-day weekly schedule (Monday-Friday) with specific exercises, sets, reps, rest periods, 
+            Include a 7-day weekly schedule (Monday-Sunday) with specific exercises, sets, reps, rest periods, 
             warm-ups, cool-downs, and duration for each day.
             
             Format your response as clean, valid JSON with this structure:
