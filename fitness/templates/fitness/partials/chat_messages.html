@@ -1,0 +1,22 @@
+{% if chat_messages %}
+  {% for message in chat_messages %}
+    <div class="mb-4 {% if message.sender == user %}flex justify-end{% endif %}">
+      <div class="{% if message.sender == user %}bg-blue-600 text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg{% else %}bg-gray-700 text-gray-200 rounded-tr-lg rounded-tl-lg rounded-br-lg{% endif %} py-2 px-4 max-w-[80%]">
+        <p>{{ message.message }}</p>
+        <p class="text-xs {% if message.sender == user %}text-blue-200{% else %}text-gray-400{% endif %} mt-1 text-right">
+          {{ message.timestamp|date:"M d, g:i a" }}
+        </p>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  {% if user.is_superuser and not selected_user %}
+    <div class="flex items-center justify-center h-full">
+      <p class="text-gray-400">Select a user to start chatting</p>
+    </div>
+  {% else %}
+    <div class="flex items-center justify-center h-full">
+      <p class="text-gray-400">No messages yet. Start the conversation!</p>
+    </div>
+  {% endif %}
+{% endif %} 

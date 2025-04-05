@@ -1757,6 +1757,11 @@ def community(request):
                 unread_messages.update(is_read=True)
 
                 context['chat_messages'] = chat_messages
+
+                # If this is an AJAX request, return only the messages part
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return render(request, 'fitness/partials/chat_messages.html', context)
+
             except User.DoesNotExist:
                 pass
     else:
@@ -1780,6 +1785,10 @@ def community(request):
 
             context['chat_messages'] = chat_messages
 
+            # If this is an AJAX request, return only the messages part
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return render(request, 'fitness/partials/chat_messages.html', context)
+
     return render(request, 'fitness/community.html', context)
 
 
@@ -1791,6 +1800,8 @@ def send_message(request):
         receiver_id = request.POST.get('receiver_id')
 
         if not message_text:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Message cannot be empty'})
             messages.error(request, "Message cannot be empty")
             return redirect('community')
 
@@ -1805,13 +1816,19 @@ def send_message(request):
             )
             message.save()
 
-            # Redirect back to the conversation
+            # If it's an AJAX request, return JSON response
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success'})
+
+            # Otherwise redirect back to the conversation
             if request.user.is_superuser:
                 return redirect(f'/community/?user_id={receiver_id}')
             else:
                 return redirect('community')
 
         except User.DoesNotExist:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'User not found'})
             messages.error(request, "User not found")
             return redirect('community')
 

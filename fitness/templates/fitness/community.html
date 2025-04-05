@@ -116,6 +116,83 @@
     if (chatMessages) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+    
+    // Start auto-refresh if we're in a chat
+    startAutoRefresh();
+  });
+  
+  // Auto-refresh functionality
+  function startAutoRefresh() {
+    // Only start if we have a proper chat page (either superuser with selected user or regular user with admin)
+    {% if user.is_superuser and selected_user or not user.is_superuser and admin_user %}
+      // Check for new messages every 3 seconds
+      setInterval(refreshChatMessages, 3000);
+    {% endif %}
+  }
+  
+  function refreshChatMessages() {
+    const chatMessagesContainer = document.getElementById('chat-messages');
+    const currentUrl = window.location.href;
+    
+    // Use AJAX to fetch updated messages
+    fetch(currentUrl, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      }
+    })
+    .then(response => response.text())
+    .then(html => {
+      // Remember scroll position
+      const wasAtBottom = isScrolledToBottom(chatMessagesContainer);
+      
+      // Update only the messages
+      chatMessagesContainer.innerHTML = html;
+      
+      // If was at bottom before updating, scroll back to bottom
+      if (wasAtBottom) {
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      }
+    })
+    .catch(error => {
+      console.error('Error refreshing messages:', error);
+    });
+  }
+  
+  // Helper to check if chat is scrolled to the bottom
+  function isScrolledToBottom(element) {
+    return Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop) < 10;
+  }
+  
+  // Form submission with AJAX to prevent full page reload
+  document.addEventListener('DOMContentLoaded', function() {
+    const messageForm = document.querySelector('form[action="{% url "send_message" %}"]');
+    
+    if (messageForm) {
+      messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(messageForm);
+        const messageInput = messageForm.querySelector('input[name="message"]');
+        
+        // Only proceed if the message is not empty
+        if (messageInput.value.trim()) {
+          fetch('{% url "send_message" %}', {
+            method: 'POST',
+            body: formData,
+          })
+          .then(() => {
+            // Clear the message input
+            messageInput.value = '';
+            
+            // Refresh the messages immediately after sending
+            refreshChatMessages();
+          })
+          .catch(error => {
+            console.error('Error sending message:', error);
+          });
+        }
+      });
+    }
   });
 </script>
 {% endblock %} 
