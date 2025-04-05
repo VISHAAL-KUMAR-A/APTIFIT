@@ -26,12 +26,9 @@ import re
 import datetime
 from django.db.models import Q
 
-# Load environment variables
+# Make sure this is called BEFORE any OpenAI API calls
 load_dotenv()
-
-# Remove the hardcoded API key and use environment variable instead
-openai_api_key = os.environ.get("OPENAI_API_KEY")
-openai.api_key = openai_api_key
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # Create your views here.
 
@@ -483,7 +480,7 @@ def chatbot(request):
 
         try:
             # Initialize the OpenAI client
-            client = openai.OpenAI(api_key=openai_api_key)
+            client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
             # Prepare messages list
             messages = [{"role": "system", "content": system_message}]
@@ -938,7 +935,7 @@ def diet_tracker(request):
         calories = None
 
         # Initialize the OpenAI client
-        client = openai.OpenAI(api_key=openai_api_key)
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
         # Prepare the system message for food analysis
         system_message = """You are a nutrition expert. Analyze the food description or image provided.
@@ -1119,7 +1116,7 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
         """
 
         # Initialize the OpenAI client
-        client = openai.OpenAI(api_key=openai_api_key)
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
         # Update each future day
         for day in future_days:
@@ -1374,7 +1371,7 @@ def exercise_tracker(request):
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=2000,
+                    max_tokens=3000,
                     # Explicitly request JSON format
                     response_format={"type": "json_object"}
                 )
@@ -1565,7 +1562,7 @@ def health_tracker(request):
             base64_image = base64.b64encode(image_data).decode('utf-8')
 
             # Initialize the OpenAI client
-            client = openai.OpenAI(api_key=openai_api_key)
+            client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
             # Prepare the system message
             system_message = """You are a health data analyzer. Extract health metrics from fitness tracker images.
