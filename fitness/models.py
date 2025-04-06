@@ -244,6 +244,7 @@ class HealthData(models.Model):
     calories_burnt = models.IntegerField(null=True, blank=True)
     sleep_hours = models.FloatField(null=True, blank=True)
     blood_pressure = models.CharField(max_length=20, null=True, blank=True)
+    oxygen_level = models.IntegerField(null=True, blank=True)
     additional_data = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
@@ -281,6 +282,17 @@ class HealthData(models.Model):
             return "Optimal"
         else:
             return "Excessive"
+
+    @property
+    def o2_status(self):
+        if not self.oxygen_level:
+            return "Unknown"
+        if self.oxygen_level < 90:
+            return "Low"
+        elif self.oxygen_level < 95:
+            return "Borderline"
+        else:
+            return "Normal"
 
 
 class CommunityMessage(models.Model):

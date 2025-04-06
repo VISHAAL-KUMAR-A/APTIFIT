@@ -1550,6 +1550,7 @@ def health_tracker(request):
         calories_burnt = request.POST.get('calories_burnt', None)
         sleep_hours = request.POST.get('sleep_hours', None)
         blood_pressure = request.POST.get('blood_pressure', None)
+        oxygen_level = request.POST.get('oxygen_level', None)
 
         # Check if we have either manual data or an image
         if health_image:
@@ -1573,6 +1574,7 @@ def health_tracker(request):
                 "calories_burnt": numeric value or null,
                 "sleep_hours": numeric value or null,
                 "blood_pressure": string or null,
+                "oxygen_level": numeric value or null,
                 "additional_metrics": {any other metrics found}
             }
             If you can't identify a specific metric, set its value to null."""
@@ -1618,13 +1620,15 @@ def health_tracker(request):
                     health_data['sleep_hours'] = float(sleep_hours)
                 if blood_pressure:
                     health_data['blood_pressure'] = blood_pressure
+                if oxygen_level:
+                    health_data['oxygen_level'] = int(oxygen_level)
 
             except Exception as e:
                 messages.error(
                     request, f"Error analyzing health data image: {str(e)}")
                 health_data = {}
 
-        elif any([heart_rate, steps, calories_burnt, sleep_hours, blood_pressure]):
+        elif any([heart_rate, steps, calories_burnt, sleep_hours, blood_pressure, oxygen_level]):
             # Process manually entered data
             health_data = {
                 "heart_rate": int(heart_rate) if heart_rate else None,
@@ -1632,6 +1636,7 @@ def health_tracker(request):
                 "calories_burnt": int(calories_burnt) if calories_burnt else None,
                 "sleep_hours": float(sleep_hours) if sleep_hours else None,
                 "blood_pressure": blood_pressure if blood_pressure else None,
+                "oxygen_level": int(oxygen_level) if oxygen_level else None,
                 "additional_metrics": {}
             }
         else:
@@ -1652,6 +1657,7 @@ def health_tracker(request):
                 calories_burnt=health_data.get('calories_burnt'),
                 sleep_hours=health_data.get('sleep_hours'),
                 blood_pressure=health_data.get('blood_pressure'),
+                oxygen_level=health_data.get('oxygen_level'),
                 additional_data=health_data.get('additional_metrics', {})
             )
 
@@ -1688,6 +1694,12 @@ def health_tracker(request):
                     if 7 <= new_health_data.sleep_hours <= 9:
                         if new_health_data.sleep_hours > last_record.sleep_hours and last_record.sleep_hours < 7:
                             improvements['sleep_hours'] = f"Improved by {new_health_data.sleep_hours - last_record.sleep_hours:.1f} hours"
+
+                # Oxygen level improvement
+                if new_health_data.oxygen_level and last_record.oxygen_level:
+                    o2_diff = new_health_data.oxygen_level - last_record.oxygen_level
+                    if o2_diff > 0 and last_record.oxygen_level < 95:
+                        improvements['oxygen_level'] = f"Improved by {o2_diff}%"
 
             # Add notification
             improvements_text = ", ".join(

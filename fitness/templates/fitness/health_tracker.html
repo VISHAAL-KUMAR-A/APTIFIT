@@ -131,6 +131,11 @@
                                     <label for="blood_pressure" class="block text-sm text-gray-400 mb-1">Blood Pressure (e.g., 120/80)</label>
                                     <input type="text" id="blood_pressure" name="blood_pressure" class="bg-gray-800 text-white border border-gray-600 rounded-md w-full p-2" pattern="\d+/\d+">
                                 </div>
+                                
+                                <div>
+                                    <label for="oxygen_level" class="block text-sm text-gray-400 mb-1">Oxygen Level (%)</label>
+                                    <input type="number" id="oxygen_level" name="oxygen_level" class="bg-gray-800 text-white border border-gray-600 rounded-md w-full p-2" min="70" max="100">
+                                </div>
                             </div>
                         </div>
                         
@@ -202,6 +207,17 @@
                             <p class="text-2xl font-bold text-blue-400">{{ current_data.blood_pressure }}</p>
                         </div>
                         {% endif %}
+                        
+                        {% if current_data.oxygen_level %}
+                        <div class="p-3 bg-gray-700 rounded-lg">
+                            <h3 class="text-sm text-gray-400">Oxygen Level</h3>
+                            <p class="text-2xl font-bold {% if current_data.o2_status == 'Normal' %}text-green-400{% elif current_data.o2_status == 'Borderline' %}text-yellow-400{% else %}text-red-400{% endif %}">{{ current_data.oxygen_level }}%</p>
+                            <p class="text-xs text-gray-400">Status: {{ current_data.o2_status }}</p>
+                            {% if improvements.oxygen_level %}
+                            <p class="text-xs text-green-400 mt-1">{{ improvements.oxygen_level }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
@@ -220,6 +236,7 @@
                                 <button class="chart-tab px-4 py-2 text-gray-400 hover:text-blue-400" data-chart="steps-chart">Steps</button>
                                 <button class="chart-tab px-4 py-2 text-gray-400 hover:text-blue-400" data-chart="calories-chart">Calories</button>
                                 <button class="chart-tab px-4 py-2 text-gray-400 hover:text-blue-400" data-chart="sleep-chart">Sleep</button>
+                                <button class="chart-tab px-4 py-2 text-gray-400 hover:text-blue-400" data-chart="o2-chart">O2 Level</button>
                             </div>
                             
                             <!-- Charts -->
@@ -235,6 +252,9 @@
                             <div class="chart-container hidden" id="sleep-chart-container">
                                 <canvas id="sleep-chart" height="250"></canvas>
                             </div>
+                            <div class="chart-container hidden" id="o2-chart-container">
+                                <canvas id="o2-chart" height="250"></canvas>
+                            </div>
                         </div>
                         
                         <!-- Data Table -->
@@ -249,6 +269,7 @@
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Steps</th>
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Calories</th>
                                             <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Sleep</th>
+                                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">O2 Level</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-gray-800 divide-y divide-gray-700">
@@ -259,6 +280,7 @@
                                             <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">{{ data.steps|default:"-" }}</td>
                                             <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">{{ data.calories_burnt|default:"-" }}</td>
                                             <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">{{ data.sleep_hours|default:"-" }} {% if data.sleep_hours %}hrs{% endif %}</td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-300">{{ data.oxygen_level|default:"-" }} {% if data.oxygen_level %}%{% endif %}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -494,6 +516,56 @@
                     scales: {
                         y: {
                             beginAtZero: false,
+                            grid: {
+                                color: 'rgba(75, 85, 99, 0.2)'
+                            },
+                            ticks: {
+                                color: 'rgba(229, 231, 235, 1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(75, 85, 99, 0.2)'
+                            },
+                            ticks: {
+                                color: 'rgba(229, 231, 235, 1)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // O2 Level Chart
+            const o2Data = [{% for data in previous_data %}{{ data.oxygen_level|default:"null" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+            o2Data.reverse();
+            
+            const o2Chart = new Chart(document.getElementById('o2-chart'), {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Oxygen Level (%)',
+                        data: o2Data,
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'rgba(229, 231, 235, 1)'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 70,
+                            max: 100,
                             grid: {
                                 color: 'rgba(75, 85, 99, 0.2)'
                             },
