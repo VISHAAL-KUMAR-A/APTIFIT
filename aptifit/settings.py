@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +26,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-)r8r9$4m9cor$vlm+g&-(v_(o@l$*236go$x-8eyyw6krp09n#"
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', "django-insecure-)r8r9$4m9cor$vlm+g&-(v_(o@l$*236go$x-8eyyw6krp09n#")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -82,6 +88,9 @@ DATABASES = {
     }
 }
 
+# Fix the database URL format - remove spaces and use proper URL format
+# DATABASE_URL = "postgresql://aptifit_django_user:fFQ1Od4HB3lzb1UyHyGmvEkb8qA6MxeN@dpg-cvotl3hr0fns739tbc90-a.oregon-postgres.render.com/aptifit_django"
+# DATABASES["default"] = dj_database_url.parse(DATABASE_URL)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -122,7 +131,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICfILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),
+#                     )  # Fixed typo in variable name
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -137,5 +147,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'vkthedon123@gmail.com'
-EMAIL_HOST_PASSWORD = 'xbwyvtwlothqpthv'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'vkthedon123@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'xbwyvtwlothqpthv')
