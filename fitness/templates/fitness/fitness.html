@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitonist - Transform Your Fitness Journey</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Base Styles */
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --accent: #f72585;
+            --light: #ffffff;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --gray-dark: #1e293b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gradient-1: linear-gradient(135deg, #4361ee, #7209b7);
+            --gradient-2: linear-gradient(135deg, #3a56d4, #f72585);
+            --gradient-3: linear-gradient(90deg, #4cc9f0, #4361ee, #7209b7, #f72585);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.25rem;
+            --radius: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-full: 9999px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: var(--dark);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+        }
+
+        h3 {
+            font-size: 1.75rem;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+
+        .section-header p {
+            color: var(--gray-light);
+            font-size: 1.125rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            outline: none;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        .btn-primary:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--light);
+            color: var(--light);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-outline-primary {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: var(--light);
+        }
+
+        .btn-light {
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-outline-light {
+            background-color: transparent;
+            border: 2px solid var(--light);
+            color: var(--light);
+        }
+
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #4361ee, #7209b7, #f72585);
+        }
+
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .logo-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            height: 4rem;
+            background-color: #000;
+            border-radius: 50%;
+            margin-bottom: 1.5rem;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .logo {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: bold;
+        }
+
+        .hero h1 {
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+
+        .scroll-indicator i {
+            color: var(--light);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 0;
+            background: linear-gradient(to bottom, #000, #111827);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background-color: #1f2937;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: var(--transition);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            width: 4rem;
+            height: 4rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .feature-card[data-color="blue"] .feature-icon {
+            background: linear-gradient(135deg, #4361ee, #3a56d4);
+            color: var(--light);
+        }
+
+        .feature-card[data-color="green"] .feature-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: var(--light);
+        }
+
+        .feature-card[data-color="purple"] .feature-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7209b7);
+            color: var(--light);
+        }
+
+        .feature-card[data-color="yellow"] .feature-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: var(--light);
+        }
+
+        .feature-card[data-color="red"] .feature-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: var(--light);
+        }
+
+        .feature-card[data-color="orange"] .feature-icon {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: var(--light);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--gray-light);
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .feature-link {
+            color: var(--gray-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .feature-link:hover {
+            color: var(--primary);
+        }
+
+        .feature-link i {
+            transition: transform 0.3s ease;
+        }
+
+        .feature-link:hover i {
+            transform: translateX(4px);
+        }
+
+        /* Dashboard Preview */
+        .dashboard-preview {
+            padding: 6rem 0;
+            background: linear-gradient(to bottom, #111827, #000);
+        }
+
+        .dashboard-tabs {
+            background-color: #1f2937;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #374151;
+        }
+
+        .tabs-header {
+            display: flex;
+            background-color: #111827;
+            padding: 0.5rem;
+            border-bottom: 1px solid #374151;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--gray-light);
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: var(--light);
+        }
+
+        .tabs-content {
+            padding: 1.5rem;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .dashboard-card {
+            background-color: #111827;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .dashboard-card.wide {
+            grid-column: span 1;
+        }
+
+        .dashboard-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .metric {
+            background-color: #1f2937;
+            padding: 1rem;
+            border-radius: var(--radius);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-light);
+            font-size: 0.875rem;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value span {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--gray-light);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: var(--radius-full);
+        }
+
+        .workout-today {
+            margin-top: 1.5rem;
+        }
+
+        .workout-today h4 {
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .workout-card {
+            background-color: #1f2937;
+            padding: 1rem;
+            border-radius: var(--radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .workout-card h5 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .workout-card p {
+            font-size: 0.875rem;
+            color: var(--gray-light);
+            margin-bottom: 0;
+        }
+
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            padding-top: 1rem;
+        }
+
+        .bar-chart {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+
+        .bar {
+            flex: 1;
+            background-color: rgba(67, 97, 238, 0.2);
+            border-radius: var(--radius-sm);
+            position: relative;
+            min-height: 20px;
+            transition: height 1s ease;
+        }
+
+        .bar::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary);
+            border-radius: var(--radius-sm);
+            height: 0;
+            animation: barFill 1s ease forwards;
+        }
+
+        .bar span {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--gray-light);
+        }
+
+        /* App Showcase */
+        .app-showcase {
+            padding: 6rem 0;
+            background: linear-gradient(to bottom, #000, #111827);
+            overflow: hidden;
+        }
+
+        .app-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            .app-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .app-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .app-text p {
+            font-size: 1.125rem;
+            color: var(--gray-light);
+            margin-bottom: 2rem;
+        }
+
+        .app-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .app-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--light);
+            color: var(--dark);
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .app-btn:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: var(--dark);
+        }
+
+        .app-btn i {
+            font-size: 1.5rem;
+        }
+
+        .app-btn div {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .app-btn span {
+            font-size: 0.75rem;
+            line-height: 1;
+        }
+
+        .app-btn strong {
+            font-size: 1rem;
+            line-height: 1.2;
+        }
+
+        .app-phones {
+            position: relative;
+            height: 600px;
+        }
+
+        #phone-scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 6rem 0;
+            background: linear-gradient(to bottom, #111827, #000);
+        }
+
+        .billing-toggle {
+            display: flex;
+            justify-content: center;
+            background-color: #1f2937;
+            border-radius: var(--radius-full);
+            padding: 0.25rem;
+            width: fit-content;
+            margin: 0 auto 3rem;
+        }
+
+        .toggle-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-full);
+            border: none;
+            background: transparent;
+            color: var(--gray-light);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-btn.active {
+            background-color: var(--primary);
+            color: var(--light);
+        }
+
+        .toggle-btn span {
+            font-size: 0.75rem;
+            opacity: 0.75;
+            margin-left: 0.25rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background-color: #1f2937;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            position: relative;
+            transition: var(--transition);
+            border: 1px solid #374151;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .pricing-card.popular {
+            background: linear-gradient(to bottom, #1e3a8a, #1e40af);
+            border-color: #3b82f6;
+            transform: translateY(-10px);
+        }
+
+        .popular-tag {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--primary);
+            color: var(--light);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-description {
+            color: var(--gray-light);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            min-height: 2.5rem;
+        }
+
+        .pricing-card.popular .plan-description {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .price {
+            margin-bottom: 1.5rem;
+        }
+
+        .amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .period {
+            font-size: 1rem;
+            color: var(--gray-light);
+        }
+
+        .pricing-card.popular .period {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--gray-light);
+        }
+
+        .pricing-card.popular .features-list li {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .features-list i {
+            color: var(--success);
+        }
+
+        .pricing-card.popular .features-list i {
+            color: #38bdf8;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 6rem 0;
+            background: linear-gradient(to bottom, #000, #111827);
+        }
+
+        .testimonial-slider {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .testimonial-container {
+            background-color: #1f2937;
+            border-radius: var(--radius-lg);
+            padding: 3rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .testimonial {
+            display: none;
+        }
+
+        .testimonial.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .quote-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            opacity: 0.3;
+            margin-bottom: 1.5rem;
+        }
+
+        .testimonial-text {
+            font-size: 1.25rem;
+            font-style: italic;
+            margin-bottom: 2rem;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+        }
+
+        .author-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .author-info h4 {
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .author-info p {
+            font-size: 0.875rem;
+            color: var(--gray-light);
+            margin-bottom: 0;
+        }
+
+        .testimonial-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .testimonial-arrow {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background-color: #1f2937;
+            border: none;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .testimonial-arrow:hover {
+            background-color: var(--primary);
+        }
+
+        .testimonial-dots {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0 1rem;
+        }
+
+        .dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 50%;
+            background-color: #374151;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dot.active {
+            background-color: var(--primary);
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta p {
+            font-size: 1.125rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #000;
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: var(--light);
+            color: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .footer-logo span {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .footer-col p {
+            color: var(--gray-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background-color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light);
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background-color: var(--primary);
+            color: var(--light);
+        }
+
+        .footer-col h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-col ul li a {
+            color: var(--gray-light);
+            transition: var(--transition);
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--light);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #1f2937;
+        }
+
+        .footer-bottom p {
+            color: var(--gray-light);
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) translateX(-50%);
+            }
+            40% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+            60% {
+                transform: translateY(-5px) translateX(-50%);
+            }
+        }
+
+        @keyframes barFill {
+            from {
+                height: 0;
+            }
+            to {
+                height: 100%;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            h2 {
+                font-size: 2rem;
+            }
+            
+            .cta-buttons, .app-buttons {
+                flex-direction: column;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Hero Section with 3D Background -->
+        <section class="hero">
+            <canvas id="hero-canvas"></canvas>
+            <div class="hero-content">
+                <div class="logo-container">
+                    <div class="logo">APT</div>
+                </div>
+                <h1>Transform Your <span class="gradient-text">Fitness</span> Journey</h1>
+                <p>Track workouts, nutrition, and progress with our AI-powered platform. Achieve your fitness goals faster than ever before.</p>
+                <div class="cta-buttons">
+                    <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline">Sign Up</a>
+                </div>
+                <div class="scroll-indicator">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Everything You Need For Your Fitness Journey</h2>
+                    <p>Our platform combines cutting-edge technology with proven fitness methodologies to deliver results.</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card" data-color="blue">
+                        <div class="feature-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <h3>Workout Tracking</h3>
+                        <p>Log and track your workouts with detailed analytics and progress tracking.</p>
+                        <a href="#" class="feature-link">Learn more <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="feature-card" data-color="green">
+                        <div class="feature-icon">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <h3>Nutrition Planning</h3>
+                        <p>Track your meals, macros, and calories with our intuitive nutrition dashboard.</p>
+                        <a href="#" class="feature-link">Learn more <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="feature-card" data-color="purple">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Progress Analytics</h3>
+                        <p>Visualize your progress with detailed charts and insights.</p>
+                        <a href="#" class="feature-link">Learn more <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="feature-card" data-color="yellow">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3>AI Coaching</h3>
+                        <p>Get personalized workout and nutrition recommendations from our AI coach.</p>
+                        <a href="#" class="feature-link">Learn more <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="feature-card" data-color="red">
+                        <div class="feature-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3>Health Monitoring</h3>
+                        <p>Track your heart rate, sleep, and other health metrics in one place.</p>
+                        <a href="#" class="feature-link">Learn more <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="feature-card" data-color="orange">
+                        <div class="feature-icon">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <h3>Challenges & Rewards</h3>
+                        <p>Join challenges, earn rewards, and stay motivated on your fitness journey.</p>
+                        <a href="#" class="feature-link">Learn more <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Preview -->
+        <section class="dashboard-preview">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Your Fitness Dashboard</h2>
+                    <p>Everything you need to track your fitness journey in one place.</p>
+                </div>
+                <div class="dashboard-tabs">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="overview">Overview</button>
+                        <button class="tab-btn" data-tab="nutrition">Nutrition</button>
+                        <button class="tab-btn" data-tab="workouts">Workouts</button>
+                        <button class="tab-btn" data-tab="progress">Progress</button>
+                    </div>
+                    <div class="tabs-content">
+                        <div class="tab-pane active" id="overview">
+                            <div class="dashboard-grid">
+                                <div class="dashboard-card wide">
+                                    <h3>Today's Summary</h3>
+                                    <div class="metrics-grid">
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-fire"></i>
+                                                <span>Calories</span>
+                                            </div>
+                                            <p class="metric-value">1250 <span>kcal</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 75%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-running"></i>
+                                                <span>Protein</span>
+                                            </div>
+                                            <p class="metric-value">65g <span>/ 120g</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 54%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-apple-alt"></i>
+                                                <span>Carbs</span>
+                                            </div>
+                                            <p class="metric-value">40g <span>/ 200g</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 20%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-chart-bar"></i>
+                                                <span>Fat</span>
+                                            </div>
+                                            <p class="metric-value">30g <span>/ 65g</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 46%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="workout-today">
+                                        <h4>Today's Workout</h4>
+                                        <div class="workout-card">
+                                            <div>
+                                                <h5>Upper Body Strength</h5>
+                                                <p>45 min · 6 exercises</p>
+                                            </div>
+                                            <button class="btn btn-sm">Start</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h3>Weekly Progress</h3>
+                                    <div class="chart-container">
+                                        <div class="bar-chart">
+                                            <div class="bar" style="height: 40%"><span>M</span></div>
+                                            <div class="bar" style="height: 65%"><span>T</span></div>
+                                            <div class="bar" style="height: 35%"><span>W</span></div>
+                                            <div class="bar" style="height: 85%"><span>T</span></div>
+                                            <div class="bar" style="height: 55%"><span>F</span></div>
+                                            <div class="bar" style="height: 60%"><span>S</span></div>
+                                            <div class="bar" style="height: 70%"><span>S</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="nutrition">
+                            <div class="dashboard-grid">
+                                <div class="dashboard-card wide">
+                                    <h3>Nutrition Summary</h3>
+                                    <div class="metrics-grid">
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-fire"></i>
+                                                <span>Daily Goal</span>
+                                            </div>
+                                            <p class="metric-value">2100 <span>kcal</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 60%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-drumstick-bite"></i>
+                                                <span>Protein</span>
+                                            </div>
+                                            <p class="metric-value">105g <span>/ 140g</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 75%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-bread-slice"></i>
+                                                <span>Carbs</span>
+                                            </div>
+                                            <p class="metric-value">180g <span>/ 230g</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 78%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-header">
+                                                <i class="fas fa-cheese"></i>
+                                                <span>Fat</span>
+                                            </div>
+                                            <p class="metric-value">45g <span>/ 65g</span></p>
+                                            <div class="progress-bar">
+                                                <div class="progress" style="width: 69%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="workout-today">
+                                        <h4>Today's Meals</h4>
+                                        <div class="workout-card" style="margin-bottom: 10px;">
+                                            <div>
+                                                <h5>Breakfast</h5>
+                                                <p>Protein oatmeal • 420 kcal</p>
+                                            </div>
+                                            <button class="btn btn-sm">Log</button>
+                                        </div>
+                                        <div class="workout-card" style="margin-bottom: 10px;">
+                                            <div>
+                                                <h5>Lunch</h5>
+                                                <p>Chicken salad • 590 kcal</p>
+                                            </div>
+                                            <button class="btn btn-sm">Log</button>
+                                        </div>
+                                        <div class="workout-card">
+                                            <div>
+                                                <h5>Dinner</h5>
+                                                <p>Salmon with veggies • 640 kcal</p>
+                                            </div>
+                                            <button class="btn btn-sm">Log</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h3>Water Intake</h3>
+                                    <div style="text-align: center; padding: 10px 0 20px;">
+                                        <i class="fas fa-tint" style="font-size: 2.5rem; color: #38bdf8;"></i>
+                                        <h4 style="margin: 10px 0;">1.2L / 2.5L</h4>
+                                        <div class="progress-bar" style="height: 10px; margin-bottom: 20px;">
+                                            <div class="progress" style="width: 48%; background-color: #38bdf8;"></div>
+                                        </div>
+                                        <button class="btn btn-sm" style="background-color: #38bdf8; color: white;">
+                                            <i class="fas fa-plus"></i> Add water
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="workouts">
+                            <div class="dashboard-grid">
+                                <div class="dashboard-card wide">
+                                    <h3>Workout Schedule</h3>
+                                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px;">
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius); border-bottom: 3px solid var(--primary);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Mon</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">Chest</p>
+                                        </div>
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Tue</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">Back</p>
+                                        </div>
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Wed</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">Rest</p>
+                                        </div>
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Thu</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">Legs</p>
+                                        </div>
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Fri</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">Arms</p>
+                                        </div>
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Sat</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">HIIT</p>
+                                        </div>
+                                        <div style="text-align: center; padding: 10px; background-color: #1f2937; border-radius: var(--radius);">
+                                            <p style="margin: 0; font-size: 0.8rem; color: var(--gray-light);">Sun</p>
+                                            <p style="margin: 5px 0; font-weight: bold;">Rest</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4>Workout Details</h4>
+                                    <div style="margin-top: 15px;">
+                                        <div class="workout-card" style="margin-bottom: 10px; background-color: #283548;">
+                                            <div>
+                                                <h5>Bench Press</h5>
+                                                <p>4 sets • 8-10 reps • 160 lbs</p>
+                                            </div>
+                                            <span style="color: var(--success);"><i class="fas fa-check-circle"></i></span>
+                                        </div>
+                                        <div class="workout-card" style="margin-bottom: 10px; background-color: #283548;">
+                                            <div>
+                                                <h5>Incline Dumbbell Press</h5>
+                                                <p>3 sets • 10-12 reps • 65 lbs</p>
+                                            </div>
+                                            <span style="color: var(--success);"><i class="fas fa-check-circle"></i></span>
+                                        </div>
+                                        <div class="workout-card">
+                                            <div>
+                                                <h5>Cable Flyes</h5>
+                                                <p>3 sets • 12-15 reps • 40 lbs</p>
+                                            </div>
+                                            <button class="btn btn-sm">Start</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h3>Workout Stats</h3>
+                                    <div style="margin-bottom: 15px;">
+                                        <p style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span>This week:</span>
+                                            <span>4 / 5 workouts</span>
+                                        </p>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 80%;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center; padding: 15px; background-color: #1f2937; border-radius: var(--radius);">
+                                        <i class="fas fa-fire-alt" style="font-size: 1.5rem; color: #ef4444;"></i>
+                                        <h4 style="margin: 5px 0;">Current streak</h4>
+                                        <p style="font-size: 2rem; font-weight: bold; margin: 5px 0;">16 days</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="progress">
+                            <div class="dashboard-grid">
+                                <div class="dashboard-card wide">
+                                    <h3>Body Metrics</h3>
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                                        <div style="background-color: #1f2937; padding: 15px; border-radius: var(--radius); text-align: center;">
+                                            <p style="margin: 0; color: var(--gray-light);">Weight</p>
+                                            <h4 style="margin: 5px 0; font-size: 1.5rem;">175 lbs</h4>
+                                            <p style="margin: 0; color: var(--success); font-size: 0.8rem;">
+                                                <i class="fas fa-arrow-down"></i> 2.5 lbs this month
+                                            </p>
+                        </div>
+                                        <div style="background-color: #1f2937; padding: 15px; border-radius: var(--radius); text-align: center;">
+                                            <p style="margin: 0; color: var(--gray-light);">Body Fat</p>
+                                            <h4 style="margin: 5px 0; font-size: 1.5rem;">16.8%</h4>
+                                            <p style="margin: 0; color: var(--success); font-size: 0.8rem;">
+                                                <i class="fas fa-arrow-down"></i> 1.2% this month
+                                            </p>
+                                        </div>
+                                        <div style="background-color: #1f2937; padding: 15px; border-radius: var(--radius); text-align: center;">
+                                            <p style="margin: 0; color: var(--gray-light);">Muscle Mass</p>
+                                            <h4 style="margin: 5px 0; font-size: 1.5rem;">142 lbs</h4>
+                                            <p style="margin: 0; color: var(--primary); font-size: 0.8rem;">
+                                                <i class="fas fa-arrow-up"></i> 1.5 lbs this month
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4>Weight Trend</h4>
+                                    <div class="chart-container" style="height: 180px; margin-top: 15px;">
+                                        <div class="bar-chart">
+                                            <div class="bar" style="height: 60%"><span>Jan</span></div>
+                                            <div class="bar" style="height: 65%"><span>Feb</span></div>
+                                            <div class="bar" style="height: 58%"><span>Mar</span></div>
+                                            <div class="bar" style="height: 55%"><span>Apr</span></div>
+                                            <div class="bar" style="height: 50%"><span>May</span></div>
+                                            <div class="bar" style="height: 45%"><span>Jun</span></div>
+                                            <div class="bar" style="height: 43%"><span>Jul</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card">
+                                    <h3>Performance</h3>
+                                    <div style="margin-bottom: 20px;">
+                                        <p style="margin-bottom: 5px;">Bench Press (1RM)</p>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                            <span>210 lbs</span>
+                                            <span style="color: var(--primary);"><i class="fas fa-arrow-up"></i> 15 lbs</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 70%;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 20px;">
+                                        <p style="margin-bottom: 5px;">Squat (1RM)</p>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                            <span>285 lbs</span>
+                                            <span style="color: var(--primary);"><i class="fas fa-arrow-up"></i> 25 lbs</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 65%;"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p style="margin-bottom: 5px;">Deadlift (1RM)</p>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                            <span>315 lbs</span>
+                                            <span style="color: var(--primary);"><i class="fas fa-arrow-up"></i> 30 lbs</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 75%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3D Mobile App Showcase -->
+        <section class="app-showcase">
+            <div class="container">
+                <div class="app-content">
+                    <div class="app-text">
+                        <h2>Take Your Fitness Journey Anywhere</h2>
+                        <p>Our mobile app gives you access to your workouts, nutrition tracking, and progress analytics on the go. Never miss a workout or meal tracking again.</p>
+                        <div class="app-buttons">
+                            <a href="#" class="app-btn">
+                                <i class="fab fa-apple"></i>
+                                <div>
+                                    <span>Download on the</span>
+                                    <strong>App Store</strong>
+                                </div>
+                            </a>
+                            <a href="#" class="app-btn">
+                                <i class="fab fa-google-play"></i>
+                                <div>
+                                    <span>GET IT ON</span>
+                                    <strong>Google Play</strong>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="app-phones">
+                        <div id="phone-scene"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Plans -->
+        <section class="pricing">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Choose Your Plan</h2>
+                    <p>Select the perfect plan for your fitness journey. All plans include a 14-day free trial.</p>
+                </div>
+                <div class="billing-toggle">
+                    <button class="toggle-btn active" data-billing="monthly">Monthly</button>
+                    <button class="toggle-btn" data-billing="yearly">Yearly <span>Save 20%</span></button>
+                </div>
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h3>Basic</h3>
+                        <p class="plan-description">Perfect for beginners starting their fitness journey</p>
+                        <div class="price">
+                            <span class="amount">$9.99</span>
+                            <span class="period">/ month</span>
+                        </div>
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> Workout tracking</li>
+                            <li><i class="fas fa-check"></i> Basic nutrition tracking</li>
+                            <li><i class="fas fa-check"></i> Progress photos</li>
+                            <li><i class="fas fa-check"></i> 5 workout plans</li>
+                            <li><i class="fas fa-check"></i> Community access</li>
+                        </ul>
+                        <button class="btn btn-outline-primary">Start Basic Plan</button>
+                    </div>
+                    <div class="pricing-card popular">
+                        <div class="popular-tag">Most Popular</div>
+                        <h3>Pro</h3>
+                        <p class="plan-description">For fitness enthusiasts who want to take it to the next level</p>
+                        <div class="price">
+                            <span class="amount">$19.99</span>
+                            <span class="period">/ month</span>
+                        </div>
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> Everything in Basic</li>
+                            <li><i class="fas fa-check"></i> Advanced nutrition tracking</li>
+                            <li><i class="fas fa-check"></i> Custom workout plans</li>
+                            <li><i class="fas fa-check"></i> Body metrics tracking</li>
+                            <li><i class="fas fa-check"></i> AI workout recommendations</li>
+                            <li><i class="fas fa-check"></i> Priority support</li>
+                        </ul>
+                        <button class="btn btn-primary">Start Pro Plan</button>
+                    </div>
+                    <div class="pricing-card">
+                        <h3>Elite</h3>
+                        <p class="plan-description">The ultimate fitness experience for serious athletes</p>
+                        <div class="price">
+                            <span class="amount">$29.99</span>
+                            <span class="period">/ month</span>
+                        </div>
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> Everything in Pro</li>
+                            <li><i class="fas fa-check"></i> 1-on-1 coaching sessions</li>
+                            <li><i class="fas fa-check"></i> Personalized meal plans</li>
+                            <li><i class="fas fa-check"></i> Advanced analytics</li>
+                            <li><i class="fas fa-check"></i> Exclusive content</li>
+                            <li><i class="fas fa-check"></i> Early access to new features</li>
+                            <li><i class="fas fa-check"></i> 24/7 priority support</li>
+                        </ul>
+                        <button class="btn btn-outline-primary">Start Elite Plan</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="testimonials">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Success Stories</h2>
+                    <p>See how our platform has helped people transform their lives and achieve their fitness goals.</p>
+                </div>
+                <div class="testimonial-slider">
+                    <div class="testimonial-container">
+                        <div class="testimonial active">
+                            <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                            <p class="testimonial-text">"This app completely transformed my fitness journey. The personalized workout plans and nutrition tracking made it easy to stay on track. I've never felt better!"</p>
+                            <div class="testimonial-author">
+                                <div class="author-avatar">
+                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Johnson">
+                                </div>
+                                <div class="author-info">
+                                    <h4>Sarah Johnson</h4>
+                                    <p>Lost 30lbs in 6 months</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial">
+                            <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                            <p class="testimonial-text">"As a serious runner, I needed something that could keep up with my training. This platform has everything I need to track my progress and optimize my nutrition for peak performance."</p>
+                            <div class="testimonial-author">
+                                <div class="author-avatar">
+                                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Michael Chen">
+                                </div>
+                                <div class="author-info">
+                                    <h4>Michael Chen</h4>
+                                    <p>Marathon Runner</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial">
+                            <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                            <p class="testimonial-text">"I've tried many fitness apps, but this one stands out with its intuitive interface and comprehensive features. The progress tracking keeps me motivated every day."</p>
+                            <div class="testimonial-author">
+                                <div class="author-avatar">
+                                    <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Emily Rodriguez">
+                                </div>
+                                <div class="author-info">
+                                    <h4>Emily Rodriguez</h4>
+                                    <p>Fitness Enthusiast</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-controls">
+                        <button class="testimonial-arrow prev"><i class="fas fa-chevron-left"></i></button>
+                        <div class="testimonial-dots">
+                            <span class="dot active"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                        <button class="testimonial-arrow next"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta">
+            <div class="container">
+                <h2>Ready to Transform Your Fitness Journey?</h2>
+                <p>Join thousands of users who have already transformed their lives with our platform.</p>
+                <div class="cta-buttons">
+                    <button class="btn btn-light">Start Your Free Trial</button>
+                    <button class="btn btn-outline-light">View Demo</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-col">
+                        <div class="footer-logo">
+                            <div class="logo-icon">fi</div>
+                            <span>Fitonist</span>
+                        </div>
+                        <p>Transform your fitness journey with our all-in-one platform.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                    <div class="footer-col">
+                        <h3>Features</h3>
+                        <ul>
+                            <li><a href="#">Workout Tracking</a></li>
+                            <li><a href="#">Nutrition Planning</a></li>
+                            <li><a href="#">Progress Analytics</a></li>
+                            <li><a href="#">AI Coaching</a></li>
+                            <li><a href="#">Community</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">Guides</a></li>
+                            <li><a href="#">Recipes</a></li>
+                            <li><a href="#">Workout Library</a></li>
+                            <li><a href="#">FAQ</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Terms of Service</a></li>
+                            <li><a href="#">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2025 Fitonist. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Three.js Hero Scene
+            initHeroScene();
+            
+            // Initialize 3D Phone Scene
+            initPhoneScene();
+            
+            // Initialize Tab Switching
+            initTabs();
+            
+            // Initialize Testimonial Slider
+            initTestimonialSlider();
+            
+            // Initialize Pricing Toggle
+            initPricingToggle();
+            
+            // Scroll Indicator
+            document.querySelector('.scroll-indicator').addEventListener('click', function() {
+                window.scrollTo({
+                    top: window.innerHeight,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Hero Scene with Three.js
+        function initHeroScene() {
+            const canvas = document.getElementById('hero-canvas');
+            
+            // Create scene
+            const scene = new THREE.Scene();
+            
+            // Create camera
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Create particle system for fitness theme
+            const particlesCount = 150;
+            const particles = new THREE.Group();
+            
+            // Create different geometric shapes for particles
+            const geometries = [
+                new THREE.TetrahedronGeometry(0.1, 0),
+                new THREE.BoxGeometry(0.1, 0.1, 0.1),
+                new THREE.SphereGeometry(0.05, 10, 10),
+                new THREE.OctahedronGeometry(0.1, 0)
+            ];
+            
+            const materials = [
+                new THREE.MeshPhongMaterial({ color: 0x4361ee, flatShading: true }),
+                new THREE.MeshPhongMaterial({ color: 0x7209b7, flatShading: true }),
+                new THREE.MeshPhongMaterial({ color: 0xf72585, flatShading: true }),
+                new THREE.MeshPhongMaterial({ color: 0x4cc9f0, flatShading: true }),
+                new THREE.MeshPhongMaterial({ color: 0xffd700, flatShading: true })
+            ];
+            
+            // Store particle data for animations
+            const particleData = [];
+            
+            for (let i = 0; i < particlesCount; i++) {
+                const geomIndex = Math.floor(Math.random() * geometries.length);
+                const matIndex = Math.floor(Math.random() * materials.length);
+                
+                const particle = new THREE.Mesh(geometries[geomIndex], materials[matIndex]);
+                
+                // Random position in a sphere
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                const radius = 3 + Math.random() * 5;
+                
+                particle.position.x = radius * Math.sin(phi) * Math.cos(theta);
+                particle.position.y = radius * Math.sin(phi) * Math.sin(theta);
+                particle.position.z = radius * Math.cos(phi);
+                
+                // Random rotation
+                particle.rotation.x = Math.random() * Math.PI;
+                particle.rotation.y = Math.random() * Math.PI;
+                particle.rotation.z = Math.random() * Math.PI;
+                
+                // Random scale
+                const scale = 0.3 + Math.random() * 1.5;
+                particle.scale.set(scale, scale, scale);
+                
+                // Store animation data
+                particleData.push({
+                    rotationSpeed: {
+                        x: (Math.random() - 0.5) * 0.01,
+                        y: (Math.random() - 0.5) * 0.01,
+                        z: (Math.random() - 0.5) * 0.01
+                    },
+                    movementSpeed: {
+                        theta: (Math.random() - 0.5) * 0.001,
+                        phi: (Math.random() - 0.5) * 0.001,
+                        radius: (Math.random() - 0.5) * 0.005
+                    },
+                    originalRadius: radius,
+                    pulseSpeed: 0.003 + Math.random() * 0.01,
+                    pulseOffset: Math.random() * Math.PI * 2
+                });
+                
+                particles.add(particle);
+            }
+            
+            scene.add(particles);
+            
+            // Create fitness-themed background elements
+            
+            // Heartbeat line
+            const heartbeatPoints = [];
+            const heartbeatSegments = 100;
+            const heartbeatWidth = 5;
+            
+            for (let i = 0; i < heartbeatSegments; i++) {
+                const x = (i / heartbeatSegments) * heartbeatWidth * 2 - heartbeatWidth;
+                let y = 0;
+                
+                // Create heartbeat pattern
+                if (i > heartbeatSegments * 0.45 && i < heartbeatSegments * 0.55) {
+                    const t = (i / heartbeatSegments - 0.45) * 10;
+                    y = Math.sin(t * Math.PI * 2) * 0.5;
+                }
+                
+                heartbeatPoints.push(new THREE.Vector3(x, y - 2, 0));
+            }
+            
+            const heartbeatGeometry = new THREE.BufferGeometry().setFromPoints(heartbeatPoints);
+            const heartbeatMaterial = new THREE.LineBasicMaterial({ color: 0xff3366, linewidth: 2 });
+            const heartbeatLine = new THREE.Line(heartbeatGeometry, heartbeatMaterial);
+            scene.add(heartbeatLine);
+            
+            // Mouse movement effect
+            let mouseX = 0;
+            let mouseY = 0;
+            
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+            });
+            
+            // Animation loop
+            let time = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.01;
+                
+                // Animate particles
+                particles.children.forEach((particle, index) => {
+                    const data = particleData[index];
+                    
+                    // Rotate particle
+                    particle.rotation.x += data.rotationSpeed.x;
+                    particle.rotation.y += data.rotationSpeed.y;
+                    particle.rotation.z += data.rotationSpeed.z;
+                    
+                    // Pulsating movement
+                    const pulseFactor = Math.sin(time * data.pulseSpeed + data.pulseOffset) * 0.2 + 1;
+                    
+                    // Calculate new position
+                    let theta = Math.atan2(particle.position.y, particle.position.x) + data.movementSpeed.theta;
+                    let phi = Math.acos(particle.position.z / data.originalRadius) + data.movementSpeed.phi;
+                    let radius = data.originalRadius * pulseFactor;
+                    
+                    particle.position.x = radius * Math.sin(phi) * Math.cos(theta);
+                    particle.position.y = radius * Math.sin(phi) * Math.sin(theta);
+                    particle.position.z = radius * Math.cos(phi);
+                });
+                
+                // Animate heartbeat line
+                heartbeatPoints.forEach((point, i) => {
+                    const wave = Math.sin(time + i * 0.2) * 0.05;
+                    point.y = heartbeatPoints[i].y + wave;
+                });
+                heartbeatGeometry.setFromPoints(heartbeatPoints);
+                heartbeatLine.rotation.z = Math.sin(time * 0.1) * 0.1;
+                
+                // Rotate entire scene slightly based on mouse position
+                particles.rotation.y = mouseX * 0.2;
+                particles.rotation.x = mouseY * 0.2;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // 3D Phone Scene
+        function initPhoneScene() {
+            const container = document.getElementById('phone-scene');
+            
+            // Create scene
+            const scene = new THREE.Scene();
+            
+            // Create camera
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Create phone models
+            const phoneGeometry = new THREE.BoxGeometry(1, 2, 0.1);
+            const phoneMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            
+            const screenMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4361ee,
+                emissive: 0x4361ee,
+                emissiveIntensity: 0.2
+            });
+            
+            // Create three phones
+            const phone1 = createPhone(-1.5, 0, 0);
+            const phone2 = createPhone(0, 0, 1);
+            const phone3 = createPhone(1.5, 0, 0);
+            
+            scene.add(phone1);
+            scene.add(phone2);
+            scene.add(phone3);
+            
+            function createPhone(x, y, z) {
+                const phoneGroup = new THREE.Group();
+                
+                // Phone body
+                const body = new THREE.Mesh(phoneGeometry, phoneMaterial);
+                
+                // Phone screen
+                const screenGeometry = new THREE.BoxGeometry(0.9, 1.9, 0.01);
+                const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+                screen.position.z = 0.06;
+                
+                phoneGroup.add(body);
+                phoneGroup.add(screen);
+                
+                phoneGroup.position.set(x, y, z);
+                
+                return phoneGroup;
+            }
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Animate phones
+                phone1.position.y = Math.sin(Date.now() * 0.001) * 0.2;
+                phone2.position.y = Math.sin(Date.now() * 0.001 + 2) * 0.2;
+                phone3.position.y = Math.sin(Date.now() * 0.001 + 4) * 0.2;
+                
+                phone1.rotation.y = Math.sin(Date.now() * 0.0005) * 0.2;
+                phone2.rotation.y = Math.sin(Date.now() * 0.0005 + 2) * 0.2;
+                phone3.rotation.y = Math.sin(Date.now() * 0.0005 + 4) * 0.2;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // Tab Switching
+        function initTabs() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    // Hide all tab panes
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    
+                    // Show the corresponding tab pane
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+
+        // Testimonial Slider
+        function initTestimonialSlider() {
+            const testimonials = document.querySelectorAll('.testimonial');
+            const dots = document.querySelectorAll('.dot');
+            const prevBtn = document.querySelector('.testimonial-arrow.prev');
+            const nextBtn = document.querySelector('.testimonial-arrow.next');
+            
+            let currentIndex = 0;
+            
+            function showTestimonial(index) {
+                // Hide all testimonials
+                testimonials.forEach(testimonial => testimonial.classList.remove('active'));
+                
+                // Remove active class from all dots
+                dots.forEach(dot => dot.classList.remove('active'));
+                
+                // Show the current testimonial
+                testimonials[index].classList.add('active');
+                
+                // Add active class to current dot
+                dots[index].classList.add('active');
+                
+                currentIndex = index;
+            }
+            
+            // Next button click
+            nextBtn.addEventListener('click', () => {
+                const nextIndex = (currentIndex + 1) % testimonials.length;
+                showTestimonial(nextIndex);
+            });
+            
+            // Previous button click
+            prevBtn.addEventListener('click', () => {
+                const prevIndex = (currentIndex - 1 + testimonials.length) % testimonials.length;
+                showTestimonial(prevIndex);
+            });
+            
+            // Dot click
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    showTestimonial(index);
+                });
+            });
+            
+            // Auto slide
+            setInterval(() => {
+                const nextIndex = (currentIndex + 1) % testimonials.length;
+                showTestimonial(nextIndex);
+            }, 5000);
+        }
+
+        // Pricing Toggle
+        function initPricingToggle() {
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+            const prices = document.querySelectorAll('.amount');
+            const periods = document.querySelectorAll('.period');
+            
+            const monthlyPrices = ['$9.99', '$19.99', '$29.99'];
+            const yearlyPrices = ['$99.99', '$199.99', '$299.99'];
+            
+            toggleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    toggleBtns.forEach(b => b.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    
+                    const billingCycle = btn.getAttribute('data-billing');
+                    
+                    if (billingCycle === 'monthly') {
+                        prices.forEach((price, index) => {
+                            price.textContent = monthlyPrices[index];
+                        });
+                        periods.forEach(period => {
+                            period.textContent = '/ month';
+                        });
+                    } else {
+                        prices.forEach((price, index) => {
+                            price.textContent = yearlyPrices[index];
+                        });
+                        periods.forEach(period => {
+                            period.textContent = '/ year';
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

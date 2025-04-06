@@ -561,7 +561,7 @@ def chatbot(request):
                 model="gpt-4o",  # Updated to the current model that supports vision
                 messages=messages,
                 temperature=0.7,
-                max_tokens=2000,
+                max_tokens=3000,
             )
 
             # Extract the response content
@@ -1163,7 +1163,7 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
                     model="gpt-4o",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.7,
-                    max_tokens=2000,
+                    max_tokens=3000,
                 )
 
                 # Extract JSON from response
@@ -1842,3 +1842,8 @@ def send_message(request):
             return redirect('community')
 
     return redirect('community')
+
+
+def fitness_view(request):
+    """Landing page for the fitness app"""
+    return render(request, 'fitness/fitness.html')

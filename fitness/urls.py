@@ -3,8 +3,10 @@ from . import views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('login/', views.login_view, name='login'),
+    path("", views.fitness_view, name="fitness"),
+    path("login/", views.login_view, name="login"),
+    path("register/", views.register_view, name="register"),
+    path("index/", views.index, name="index"),
     path('profile/', views.profile, name='profile'),
     path('profile/save/', views.save_profile, name='save_profile'),
     path('profile/update/', views.update_profile, name='update_profile'),
@@ -14,7 +16,6 @@ urlpatterns = [
     path('forget-password/', views.forget_password, name='forget_password'),
     path('reset-password/<str:token>/',
          views.reset_password, name='reset_password'),
-    path('register/', views.register_view, name='register'),
     path('forget-password/', views.forget_password, name='forget_password'),
     path('reset-password/',
          auth_views.PasswordResetView.as_view(
