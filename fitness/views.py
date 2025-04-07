@@ -23,14 +23,13 @@ import base64
 from dotenv import load_dotenv
 from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution, HealthData, CommunityMessage
 import re
-import datetime
 from django.db.models import Q
 
-# Make sure this is called BEFORE any OpenAI API calls
-load_dotenv()
-openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # Create your views here.
+
+load_dotenv()
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 def add_notification(request, message, category="info"):
@@ -113,7 +112,6 @@ def index(request):
     # Check for user notification preferences
     notification_preference = request.user.userprofile.notification_preference
 
-    # Initialize notification variables
     diet_notification = None
     exercise_notification = None
 
