@@ -44,6 +44,13 @@
         <p class="text-gray-400">Track what you eat and update your diet plan automatically</p>
       </div>
       
+      <!-- Diet Banner Image -->
+      <div class="mb-8 rounded-lg overflow-hidden shadow-xl">
+        <img src="https://www.eatingwell.com/thmb/7FZq7qgKbe9pc8fNF0BfaDTRWpA=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/Mediterranean-Diet-Flatlay-01-1x1-1-d698d6b9e93342ea814aff68efb3b4fa.jpg" 
+             alt="Mediterranean Diet" 
+             class="w-full h-48 md:h-64 object-cover">
+      </div>
+      
       <!-- Success message if available -->
       {% if response_message %}
       <div class="bg-green-900 text-white p-4 rounded-lg mb-6 flex justify-between items-center">
@@ -215,6 +222,12 @@
             
             <div class="p-5">
               {% if daily_plan %}
+                <!-- Diet Plan Inspiration Image -->
+                <div class="mb-4">
+                  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT67n1QOEFfbH2MaEV0g6kvcsyrtt-80-NjXA&s" 
+                       alt="Healthy Diet Inspiration" 
+                       class="w-full rounded-lg h-32 object-cover">
+                </div>
                 <div class="space-y-4">
                   <!-- Breakfast -->
                   <div>
@@ -306,6 +319,14 @@
                               </div>
                               
                               <div class="p-5">
+                                <!-- Visual Tip -->
+                                <div class="mb-4 p-3 bg-gray-700 rounded-lg flex items-center">
+                                  <div class="flex-shrink-0 mr-3">
+                                    <i class="fas fa-camera text-blue-400 text-2xl"></i>
+                                  </div>
+                                  <p class="text-gray-300 text-sm">Taking clear, well-lit photos of your meals from above works best for accurate food analysis!</p>
+                                </div>
+                                
                                 <ul class="space-y-2 text-gray-300">
                                   <li class="flex items-start">
                                     <span class="text-blue-400 mr-2">•</span>
