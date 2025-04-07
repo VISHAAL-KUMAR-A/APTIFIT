@@ -44,10 +44,28 @@
     </nav>
 
     <div class="container mx-auto px-4 py-8">
-        <!-- Header Section -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-white mb-2">Health Tracker</h1>
-            <p class="text-gray-400">Track and analyze your health metrics</p>
+        <!-- Header Section with Background Image -->
+        <div class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-r from-gray-800 to-blue-900 border border-gray-700">
+            <div class="absolute inset-0 opacity-15 mix-blend-overlay">
+                <img src="https://www.shutterstock.com/image-photo/health-monitoring-smart-watchconcept-technology-260nw-2241803219.jpg" 
+                    alt="Smart Watch Background" class="w-full h-full object-cover filter blur-sm" />
+            </div>
+            <div class="relative flex flex-col md:flex-row items-start md:items-center justify-between p-6">
+                <div class="z-10">
+                    <h1 class="text-3xl font-bold text-white mb-2">Health Tracker</h1>
+                    <p class="text-gray-300">Track and analyze your health metrics</p>
+                </div>
+                <div class="mt-4 md:mt-0 z-10 flex items-center">
+                    <div class="bg-gray-900 bg-opacity-70 rounded-lg p-3 mr-4 hidden md:block">
+                        <img src="https://www.shutterstock.com/image-photo/health-monitoring-smart-watchconcept-technology-260nw-2241803219.jpg" 
+                            alt="Smart Watch Health Monitoring" class="h-28 rounded-md" />
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-blue-700 text-white text-xs px-3 py-1 rounded-full">Smart Device Compatible</span>
+                        <p class="text-gray-300 text-sm mt-2">Connect your wearable device<br>for automatic data sync</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Messages -->
@@ -60,6 +78,16 @@
                 {% endfor %}
             </div>
         {% endif %}
+        
+        <!-- Banner with image for mobile view -->
+        <div class="md:hidden mb-6">
+            <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+                <img src="https://www.shutterstock.com/image-photo/health-monitoring-smart-watchconcept-technology-260nw-2241803219.jpg" alt="Smart Watch Health Monitoring" class="w-full h-auto object-cover" />
+                <div class="p-4">
+                    <p class="text-gray-300 text-sm">Connect your smart watch to automatically sync health data</p>
+                </div>
+            </div>
+        </div>
 
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -69,6 +97,99 @@
                     <h2 class="text-xl font-bold">Add Health Data</h2>
                 </div>
                 <div class="p-5">
+                    <!-- Fitness Service Integration -->
+                    <div class="mb-6 bg-gray-700 rounded-lg p-4 border border-gray-600">
+                        <h3 class="text-lg font-semibold text-blue-400 mb-3">Connect Fitness Services</h3>
+                        <p class="text-sm text-gray-400 mb-4">Import your health data automatically from these services</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Google Fit Integration -->
+                            <div class="bg-gray-800 rounded-lg p-4 border border-gray-600 hover:border-blue-500 transition duration-300">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 mr-3 flex items-center justify-center bg-white rounded-full overflow-hidden">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#EA4335" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
+                                            <path fill="#4285F4" d="M12,4.5C7.14,4.5 3.23,8.42 3.23,13.28C3.23,18.14 7.14,22.06 12,22.06C16.86,22.06 20.77,18.14 20.77,13.28C20.77,8.42 16.86,4.5 12,4.5Z" style="opacity:0.0" />
+                                            <path fill="#FBBC05" d="M13.75,4.57C13.17,4.5 12.59,4.47 12,4.47C11.41,4.47 10.83,4.5 10.25,4.57L12,12L13.75,4.57Z" />
+                                            <path fill="#34A853" d="M16.56,5.43C15.3,4.67 13.89,4.21 12.38,4.07L14.66,12.05L16.56,5.43Z" />
+                                            <path fill="#EA4335" d="M13.75,4.57C14.26,4.64 14.76,4.75 15.25,4.9L12,12.1L13.75,4.57Z" style="opacity:0.0" />
+                                            <path fill="#4285F4" d="M10.25,4.57C9.74,4.64 9.24,4.75 8.75,4.9L12,12.1L10.25,4.57Z" />
+                                            <path fill="#34A853" d="M7.44,5.43C8.7,4.67 10.11,4.21 11.62,4.07L9.34,12.05L7.44,5.43Z" />
+                                        </svg>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-200">Google Fit</h4>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">Sync steps, heart rate, calories and more from Google Fit</p>
+                                <button id="connect-google-fit" class="flex items-center justify-center w-full bg-white hover:bg-gray-100 text-gray-900 font-medium py-2 px-4 rounded transition duration-300">
+                                    <i class="fab fa-google mr-2"></i> Connect
+                                </button>
+                            </div>
+                            
+                            <!-- Fitbit Integration -->
+                            <div class="bg-gray-800 rounded-lg p-4 border border-gray-600 hover:border-blue-500 transition duration-300">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 mr-3 flex items-center justify-center bg-white rounded-full overflow-hidden">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="24" height="24">
+                                            <path fill="#00B0B9" d="M99.95,144.85c-24.85,0-45.04-20.19-45.04-45.04c0-24.87,20.19-45.07,45.04-45.07 s45.04,20.2,45.04,45.07C144.99,124.66,124.8,144.85,99.95,144.85 M99.95,33.16c-36.78,0-66.65,29.86-66.65,66.65 c0,36.77,29.87,66.63,66.65,66.63s66.64-29.85,66.64-66.63C166.59,63.02,136.73,33.16,99.95,33.16"/>
+                                            <path fill="#00B0B9" d="M139.05,99.81c0,21.59-17.51,39.1-39.1,39.1c-21.59,0-39.1-17.51-39.1-39.1s17.51-39.1,39.1-39.1 C121.54,60.71,139.05,78.22,139.05,99.81"/>
+                                        </svg>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-200">Fitbit</h4>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">Import sleep data, activity and more from your Fitbit device</p>
+                                <button id="connect-fitbit" class="flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition duration-300">
+                                    <i class="fas fa-link mr-2"></i> Connect
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connected Services Status -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-gray-300">Connected Services</h3>
+                            <button type="button" class="text-xs text-blue-400 hover:text-blue-300">Refresh Data</button>
+                        </div>
+                        <div class="mt-2 space-y-2">
+                            <!-- Google Fit Status -->
+                            <div class="flex items-center justify-between bg-gray-700 rounded p-2">
+                                <div class="flex items-center">
+                                    <div class="w-5 h-5 mr-2 flex items-center justify-center bg-white rounded-full overflow-hidden">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                            <path fill="#EA4335" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
+                                            <path fill="#FBBC05" d="M13.75,4.57C13.17,4.5 12.59,4.47 12,4.47C11.41,4.47 10.83,4.5 10.25,4.57L12,12L13.75,4.57Z" />
+                                            <path fill="#34A853" d="M16.56,5.43C15.3,4.67 13.89,4.21 12.38,4.07L14.66,12.05L16.56,5.43Z" />
+                                            <path fill="#4285F4" d="M10.25,4.57C9.74,4.64 9.24,4.75 8.75,4.9L12,12.1L10.25,4.57Z" />
+                                            <path fill="#34A853" d="M7.44,5.43C8.7,4.67 10.11,4.21 11.62,4.07L9.34,12.05L7.44,5.43Z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-300">Google Fit</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-green-400 mr-2">Connected</span>
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Fitbit Status -->
+                            <div class="flex items-center justify-between bg-gray-700 rounded p-2">
+                                <div class="flex items-center">
+                                    <div class="w-5 h-5 mr-2 flex items-center justify-center bg-white rounded-full overflow-hidden">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="16" height="16">
+                                            <path fill="#00B0B9" d="M99.95,144.85c-24.85,0-45.04-20.19-45.04-45.04c0-24.87,20.19-45.07,45.04-45.07 s45.04,20.2,45.04,45.07C144.99,124.66,124.8,144.85,99.95,144.85 M99.95,33.16c-36.78,0-66.65,29.86-66.65,66.65 c0,36.77,29.87,66.63,66.65,66.63s66.64-29.85,66.64-66.63C166.59,63.02,136.73,33.16,99.95,33.16"/>
+                                            <path fill="#00B0B9" d="M139.05,99.81c0,21.59-17.51,39.1-39.1,39.1c-21.59,0-39.1-17.51-39.1-39.1s17.51-39.1,39.1-39.1 C121.54,60.71,139.05,78.22,139.05,99.81"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-300">Fitbit</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-gray-400 mr-2">Not Connected</span>
+                                    <i class="fas fa-times-circle text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <form method="POST" enctype="multipart/form-data" class="space-y-6">
                         {% csrf_token %}
                         
@@ -290,6 +411,123 @@
                     </div>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Google Fit Sync -->
+    <div id="googleFitModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-gray-800 rounded-lg max-w-md w-full mx-4 border border-gray-700">
+            <div class="bg-blue-800 text-white p-4 rounded-t-lg flex justify-between items-center">
+                <h3 class="text-lg font-bold">Google Fit Sync</h3>
+                <button onclick="closeGoogleFitModal()" class="text-white hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 mr-3 flex items-center justify-center bg-white rounded-full overflow-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+                            <path fill="#EA4335" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
+                            <path fill="#4285F4" d="M12,4.5C7.14,4.5 3.23,8.42 3.23,13.28C3.23,18.14 7.14,22.06 12,22.06C16.86,22.06 20.77,18.14 20.77,13.28C20.77,8.42 16.86,4.5 12,4.5Z" style="opacity:0.0" />
+                            <path fill="#FBBC05" d="M13.75,4.57C13.17,4.5 12.59,4.47 12,4.47C11.41,4.47 10.83,4.5 10.25,4.57L12,12L13.75,4.57Z" />
+                            <path fill="#34A853" d="M16.56,5.43C15.3,4.67 13.89,4.21 12.38,4.07L14.66,12.05L16.56,5.43Z" />
+                            <path fill="#EA4335" d="M13.75,4.57C14.26,4.64 14.76,4.75 15.25,4.9L12,12.1L13.75,4.57Z" style="opacity:0.0" />
+                            <path fill="#4285F4" d="M10.25,4.57C9.74,4.64 9.24,4.75 8.75,4.9L12,12.1L10.25,4.57Z" />
+                            <path fill="#34A853" d="M7.44,5.43C8.7,4.67 10.11,4.21 11.62,4.07L9.34,12.05L7.44,5.43Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-200">Google Fit Integration</h4>
+                        <p class="text-xs text-gray-400">Import your health data</p>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-gray-300 mb-4">Select which data you'd like to import from Google Fit:</p>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="gf_steps" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="gf_steps" class="text-sm text-gray-300">Steps</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="gf_heartrate" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="gf_heartrate" class="text-sm text-gray-300">Heart Rate</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="gf_calories" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="gf_calories" class="text-sm text-gray-300">Calories</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="gf_sleep" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="gf_sleep" class="text-sm text-gray-300">Sleep</label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeGoogleFitModal()" class="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:bg-gray-700 transition duration-300">
+                        Cancel
+                    </button>
+                    <button onclick="importGoogleFitData()" class="px-4 py-2 bg-blue-600 rounded text-white hover:bg-blue-700 transition duration-300">
+                        Import Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Fitbit Sync -->
+    <div id="fitbitModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-gray-800 rounded-lg max-w-md w-full mx-4 border border-gray-700">
+            <div class="bg-blue-800 text-white p-4 rounded-t-lg flex justify-between items-center">
+                <h3 class="text-lg font-bold">Fitbit Sync</h3>
+                <button onclick="closeFitbitModal()" class="text-white hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 mr-3 flex items-center justify-center bg-white rounded-full overflow-hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="32" height="32">
+                            <path fill="#00B0B9" d="M99.95,144.85c-24.85,0-45.04-20.19-45.04-45.04c0-24.87,20.19-45.07,45.04-45.07 s45.04,20.2,45.04,45.07C144.99,124.66,124.8,144.85,99.95,144.85 M99.95,33.16c-36.78,0-66.65,29.86-66.65,66.65 c0,36.77,29.87,66.63,66.65,66.63s66.64-29.85,66.64-66.63C166.59,63.02,136.73,33.16,99.95,33.16"/>
+                            <path fill="#00B0B9" d="M139.05,99.81c0,21.59-17.51,39.1-39.1,39.1c-21.59,0-39.1-17.51-39.1-39.1s17.51-39.1,39.1-39.1 C121.54,60.71,139.05,78.22,139.05,99.81"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-200">Fitbit Integration</h4>
+                        <p class="text-xs text-gray-400">Import your Fitbit data</p>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-gray-300 mb-4">Select which data you'd like to import from Fitbit:</p>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="fb_activities" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="fb_activities" class="text-sm text-gray-300">Activities & Steps</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="fb_heartrate" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="fb_heartrate" class="text-sm text-gray-300">Heart Rate</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="fb_sleep" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="fb_sleep" class="text-sm text-gray-300">Sleep Analysis</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="fb_oxygen" class="mr-3 h-4 w-4 bg-gray-700 border-gray-600 rounded" checked>
+                        <label for="fb_oxygen" class="text-sm text-gray-300">Oxygen Saturation</label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeFitbitModal()" class="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:bg-gray-700 transition duration-300">
+                        Cancel
+                    </button>
+                    <button onclick="importFitbitData()" class="px-4 py-2 bg-blue-600 rounded text-white hover:bg-blue-700 transition duration-300">
+                        Import Data
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -585,6 +823,98 @@
                 }
             });
             {% endif %}
+        });
+
+        // Google Fit Modal Functions
+        function openGoogleFitModal() {
+            document.getElementById('googleFitModal').classList.remove('hidden');
+        }
+        
+        function closeGoogleFitModal() {
+            document.getElementById('googleFitModal').classList.add('hidden');
+        }
+        
+        function importGoogleFitData() {
+            // Show loading state or spinner
+            const importButton = event.target;
+            importButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importing...';
+            importButton.disabled = true;
+            
+            // Get selected data types
+            const steps = document.getElementById('gf_steps').checked;
+            const heartRate = document.getElementById('gf_heartrate').checked;
+            const calories = document.getElementById('gf_calories').checked;
+            const sleep = document.getElementById('gf_sleep').checked;
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // Here you would actually make an AJAX call to your backend
+                // to handle the Google Fit API import
+                
+                // Mock success response
+                closeGoogleFitModal();
+                
+                // Show success message
+                alert('Data successfully imported from Google Fit!');
+                
+                // Refresh the page to show new data
+                // window.location.reload();
+            }, 1500);
+        }
+        
+        // Fitbit Modal Functions
+        function openFitbitModal() {
+            document.getElementById('fitbitModal').classList.remove('hidden');
+        }
+        
+        function closeFitbitModal() {
+            document.getElementById('fitbitModal').classList.add('hidden');
+        }
+        
+        function importFitbitData() {
+            // Show loading state
+            const importButton = event.target;
+            importButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importing...';
+            importButton.disabled = true;
+            
+            // Get selected data types
+            const activities = document.getElementById('fb_activities').checked;
+            const heartRate = document.getElementById('fb_heartrate').checked;
+            const sleep = document.getElementById('fb_sleep').checked;
+            const oxygen = document.getElementById('fb_oxygen').checked;
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Here you would actually make an AJAX call to your backend
+                // to handle the Fitbit API import
+                
+                // Mock success response
+                closeFitbitModal();
+                
+                // Show success message
+                alert('Data successfully imported from Fitbit!');
+                
+                // Refresh the page to show new data
+                // window.location.reload();
+            }, 1500);
+        }
+        
+        // Add event listeners for the connect buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for Google Fit and Fitbit buttons
+            const googleFitButton = document.getElementById('connect-google-fit');
+            if (googleFitButton) {
+                googleFitButton.addEventListener('click', function(e) {
+                    openGoogleFitModal();
+                });
+            }
+            
+            const fitbitButton = document.getElementById('connect-fitbit');
+            if (fitbitButton) {
+                fitbitButton.addEventListener('click', function(e) {
+                    openFitbitModal();
+                });
+            }
         });
     </script>
 </body>

@@ -157,10 +157,25 @@
             
             <div class="p-5">
               {% if daily_plan %}
+                <!-- Header with diet image as background banner -->
+                <div class="relative rounded-lg overflow-hidden mb-6 h-32">
+                  <img src="https://3.imimg.com/data3/DY/IN/MY-1492311/diet-plan-500x500.jpg" 
+                       alt="Diet Plan" class="w-full h-full object-cover blur-sm opacity-40">
+                  <div class="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent"></div>
+                  <div class="absolute inset-0 flex items-center p-6">
+                    <div>
+                      <h3 class="text-xl font-bold text-white">{{ current_day }}'s Meal Plan</h3>
+                      <p class="text-blue-200">Your personalized nutrition guide</p>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="space-y-6">
                   <!-- Breakfast -->
                   <div class="space-y-2">
-                    <h3 class="text-lg font-semibold text-blue-400">Breakfast</h3>
+                    <h3 class="text-lg font-semibold text-blue-400 flex items-center">
+                      <i class="fas fa-coffee mr-2"></i>Breakfast
+                    </h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                       {% if daily_plan.breakfast %}
                         <p>{{ daily_plan.breakfast }}</p>
@@ -175,7 +190,9 @@
                   
                   <!-- Lunch -->
                   <div class="space-y-2">
-                    <h3 class="text-lg font-semibold text-blue-400">Lunch</h3>
+                    <h3 class="text-lg font-semibold text-blue-400 flex items-center">
+                      <i class="fas fa-utensils mr-2"></i>Lunch
+                    </h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                       <p>{{ daily_plan.lunch|default:"No lunch specified" }}</p>
                       {% if daily_plan.lunch_calories %}
@@ -186,7 +203,9 @@
                   
                   <!-- Dinner -->
                   <div class="space-y-2">
-                    <h3 class="text-lg font-semibold text-blue-400">Dinner</h3>
+                    <h3 class="text-lg font-semibold text-blue-400 flex items-center">
+                      <i class="fas fa-moon mr-2"></i>Dinner
+                    </h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                       <p>{{ daily_plan.dinner|default:"No dinner specified" }}</p>
                       {% if daily_plan.dinner_calories %}
@@ -197,7 +216,9 @@
                   
                   <!-- Snacks -->
                   <div class="space-y-2">
-                    <h3 class="text-lg font-semibold text-blue-400">Snacks</h3>
+                    <h3 class="text-lg font-semibold text-blue-400 flex items-center">
+                      <i class="fas fa-apple-alt mr-2"></i>Snacks
+                    </h3>
                     <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                       <p>{{ daily_plan.snacks|default:"No snacks specified" }}</p>
                       {% if daily_plan.snacks_calories %}
@@ -228,25 +249,32 @@
                   </a>
                 </div>
               {% else %}
-                <div class="flex flex-col items-center justify-center py-10 text-center">
-                  <svg class="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                  </svg>
-                  <h3 class="text-lg font-medium text-gray-300 mb-2">No Diet Plan Available</h3>
-                  
-                  {% if user.userprofile.height and user.userprofile.weight and user.userprofile.sex and user.userprofile.age %}
-                    <p class="text-gray-400 mb-6">Ask our chatbot to generate a weekly diet plan based on your profile data.</p>
-                    <a href="{% url 'chatbot' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
-                      Get Diet Plan from Chatbot
-                    </a>
-                    <p class="text-sm text-gray-400 mt-4">Simply ask: "Generate a weekly diet plan for me based on my profile"</p>
-                  {% else %}
-                    <p class="text-gray-400 mb-6">Complete your profile to unlock the diet plan generator.</p>
-                    <a href="{% url 'profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition duration-300">
-                      Complete Your Profile
-                    </a>
-                    <p class="text-sm text-gray-400 mt-4">We need your height, weight, sex, and age to create a personalized diet plan.</p>
-                  {% endif %}
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                  <div class="md:flex">
+                    <div class="md:w-1/3 relative overflow-hidden">
+                      <img src="https://3.imimg.com/data3/DY/IN/MY-1492311/diet-plan-500x500.jpg" 
+                           alt="Diet Plan Template" class="w-full h-full object-cover">
+                      <!-- Overlay gradient -->
+                      <div class="absolute inset-0 bg-gradient-to-r from-transparent to-gray-900 md:bg-gradient-to-l"></div>
+                    </div>
+                    <div class="p-6 md:w-2/3 flex flex-col justify-center">
+                      <h3 class="text-xl font-bold text-blue-400 mb-3">Personalize Your Nutrition</h3>
+                      
+                      {% if user.userprofile.height and user.userprofile.weight and user.userprofile.sex and user.userprofile.age %}
+                        <p class="text-gray-300 mb-6">Fuel your fitness journey with a custom diet plan tailored to your goals and preferences.</p>
+                        <a href="{% url 'chatbot' %}" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition duration-300 w-max">
+                          <i class="fas fa-robot mr-2"></i> Get Diet Plan from Chatbot
+                        </a>
+                        <p class="text-sm text-gray-400 mt-4">Simple ask: "Generate a weekly diet plan for me based on my profile"</p>
+                      {% else %}
+                        <p class="text-gray-300 mb-6">We need your details to create a personalized nutrition plan that meets your specific needs.</p>
+                        <a href="{% url 'profile' %}" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition duration-300 w-max">
+                          <i class="fas fa-user-edit mr-2"></i> Complete Your Profile
+                        </a>
+                        <p class="text-sm text-gray-400 mt-4">We need your height, weight, sex, and age to create a personalized diet plan.</p>
+                      {% endif %}
+                    </div>
+                  </div>
                 </div>
               {% endif %}
             </div>
