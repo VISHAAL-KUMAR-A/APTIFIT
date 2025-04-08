@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['aptifit.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -184,7 +184,6 @@ if not DEBUG:  # Only in production
                 'key': ''
             },
             'OAUTH_PKCE_ENABLED': True,
-            'CALLBACK_URL': 'accounts/google/login/callback/',
         }
     }
 
@@ -192,8 +191,6 @@ if not DEBUG:  # Only in production
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -228,7 +225,6 @@ SOCIALACCOUNT_PROVIDERS = {
             'key': ''
         },
         'OAUTH_PKCE_ENABLED': True,
-        'CALLBACK_URL': 'accounts/google/login/callback/',
     }
 }
 
