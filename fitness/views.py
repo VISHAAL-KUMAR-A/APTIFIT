@@ -61,29 +61,36 @@ def login_view(request):
         username_or_email = request.POST.get('username')
         password = request.POST.get('password')
 
-        try:
-            # Add logging for debugging
-            print(f"Login attempt for: {username_or_email}")
+        if not username_or_email or not password:
+            messages.error(request, 'Please fill in all fields')
+            return render(request, 'fitness/login.html')
 
+        try:
+            # First try to get user by email
             if '@' in username_or_email:
                 try:
                     user = User.objects.get(email=username_or_email)
                     username = user.username
                 except User.DoesNotExist:
-                    messages.error(request, 'Invalid credentials')
+                    messages.error(
+                        request, 'No user found with this email address')
                     return render(request, 'fitness/login.html')
             else:
                 username = username_or_email
 
+            # Try to authenticate
             user = authenticate(request, username=username, password=password)
+
             if user is not None:
-                login(request, user)
-                # Clear any existing session data
-                request.session.flush()
-                # Start a new session
-                request.session.cycle_key()
-                return redirect('index')
-            messages.error(request, 'Invalid credentials')
+                if user.is_active:
+                    login(request, user)
+                    messages.success(request, 'Successfully logged in!')
+                    return redirect('index')
+                else:
+                    messages.error(request, 'Your account is disabled')
+            else:
+                messages.error(request, 'Invalid password')
+
         except Exception as e:
             print(f"Login error: {str(e)}")  # For debugging
             messages.error(request, 'An error occurred during login')
@@ -1857,3 +1864,16 @@ def send_message(request):
 def fitness_view(request):
     """Landing page for the fitness app"""
     return render(request, 'fitness/fitness.html')
+
+
+# Add this temporarily to test login functionality
+def create_test_user():
+    try:
+        user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='your_test_password'
+        )
+        return "Test user created successfully"
+    except Exception as e:
+        return f"Error creating test user: {str(e)}"

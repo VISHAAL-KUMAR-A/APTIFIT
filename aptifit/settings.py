@@ -148,58 +148,27 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 # Add these lines for production static file serving
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Authentication Backend Settings
 AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by email
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# Authentication Settings
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # Use email for authentication
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-SOCIALACCOUNT_QUERY_EMAIL = True
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
-
-os.environ.pop('CURL_CA_BUNDLE', None)  # Remove the PostgreSQL CA bundle path
-
-# Add this debug logging configuration
-if not DEBUG:  # Only in production
-    import logging
-    logger = logging.getLogger('django')
-    logger.setLevel(logging.DEBUG)
-
-    SOCIALACCOUNT_PROVIDERS = {
-        'google': {
-            'SCOPE': [
-                'profile',
-                'email',
-            ],
-            'AUTH_PARAMS': {
-                'access_type': 'online',
-            },
-            'APP': {
-                'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-                'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-                'key': ''
-            },
-            'OAUTH_PKCE_ENABLED': True,
-        }
-    }
-
-    # Force HTTPS in production
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
-    SECURE_SSL_REDIRECT = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+LOGIN_REDIRECT_URL = 'index'
+LOGIN_URL = 'login'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'login'
 
 
