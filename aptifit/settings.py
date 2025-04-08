@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['aptifit.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -163,27 +163,37 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 
 os.environ.pop('CURL_CA_BUNDLE', None)  # Remove the PostgreSQL CA bundle path
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
-        },
-        'VERIFIED_EMAIL': True,
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
+# Add this debug logging configuration
+if not DEBUG:  # Only in production
+    import logging
+    logger = logging.getLogger('django')
+    logger.setLevel(logging.DEBUG)
 
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Change to 'https' in production
-SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
+    SOCIALACCOUNT_PROVIDERS = {
+        'google': {
+            'SCOPE': [
+                'profile',
+                'email',
+            ],
+            'AUTH_PARAMS': {
+                'access_type': 'online',
+            },
+            'APP': {
+                'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
+                'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+                'key': ''
+            },
+            'OAUTH_PKCE_ENABLED': True,
+            'CALLBACK_URL': 'accounts/google/login/callback/',
+        }
+    }
+
+    # Force HTTPS in production
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -218,6 +228,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'key': ''
         },
         'OAUTH_PKCE_ENABLED': True,
+        'CALLBACK_URL': 'accounts/google/login/callback/',
     }
 }
 
