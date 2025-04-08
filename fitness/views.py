@@ -58,26 +58,36 @@ def add_notification(request, message, category="info"):
 
 def login_view(request):
     if request.method == 'POST':
-        # Try to authenticate with username or email
         username_or_email = request.POST.get('username')
         password = request.POST.get('password')
 
-        # Check if the input is an email
-        if '@' in username_or_email:
-            try:
-                user = User.objects.get(email=username_or_email)
-                username = user.username
-            except User.DoesNotExist:
-                messages.error(request, 'Invalid credentials')
-                return render(request, 'fitness/login.html')
-        else:
-            username = username_or_email
+        try:
+            # Add logging for debugging
+            print(f"Login attempt for: {username_or_email}")
 
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('index')
-        messages.error(request, 'Invalid credentials')
+            if '@' in username_or_email:
+                try:
+                    user = User.objects.get(email=username_or_email)
+                    username = user.username
+                except User.DoesNotExist:
+                    messages.error(request, 'Invalid credentials')
+                    return render(request, 'fitness/login.html')
+            else:
+                username = username_or_email
+
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                # Clear any existing session data
+                request.session.flush()
+                # Start a new session
+                request.session.cycle_key()
+                return redirect('index')
+            messages.error(request, 'Invalid credentials')
+        except Exception as e:
+            print(f"Login error: {str(e)}")  # For debugging
+            messages.error(request, 'An error occurred during login')
+
     return render(request, 'fitness/login.html')
 
 
@@ -341,6 +351,8 @@ def reset_password(request, uidb64, token):
 
 
 def logout_view(request):
+    # Clear session data
+    request.session.flush()
     logout(request)
     return redirect('login')
 
