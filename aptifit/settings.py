@@ -182,7 +182,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'  # Change to 'https' in production
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Change to 'https' in production
 SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
 
 # Default primary key field type
@@ -202,7 +202,7 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'  # Change to 'https' in production
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Change to 'https' in production
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
