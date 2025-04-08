@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get(
     'SECRET_KEY', "django-insecure-)r8r9$4m9cor$vlm+g&-(v_(o@l$*236go$x-8eyyw6krp09n#")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -81,16 +81,19 @@ WSGI_APPLICATION = "aptifit.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Database configuration
+if DEBUG:  # Use SQLite for local development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
-
-# Fix the database URL format - remove spaces and use proper URL format
-# DATABASE_URL = "postgresql://aptifit_django_user:fFQ1Od4HB3lzb1UyHyGmvEkb8qA6MxeN@dpg-cvotl3hr0fns739tbc90-a.oregon-postgres.render.com/aptifit_django"
-# DATABASES["default"] = dj_database_url.parse(DATABASE_URL)
+else:  # Use PostgreSQL in production
+    DATABASE_URL = "postgresql://aptifit_django_user:fFQ1Od4HB3lzb1UyHyGmvEkb8qA6MxeN@dpg-cvotl3hr0fns739tbc90-a.oregon-postgres.render.com/aptifit_django"
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL)
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
