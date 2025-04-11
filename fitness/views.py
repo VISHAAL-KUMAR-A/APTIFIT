@@ -720,42 +720,53 @@ def extract_meal_info(text, meal_type):
 @login_required
 def save_profile(request):
     if request.method == 'POST':
-        # Get form data
-        try:
-            height = float(request.POST.get('height'))
-            weight = float(request.POST.get('weight'))
-            sex = request.POST.get('sex')
-            age = int(request.POST.get('age'))
+        # Get the user profile
+        profile = request.user.userprofile
 
-            # Save to user profile
-            user_profile = request.user.userprofile
-            user_profile.height = height
-            user_profile.weight = weight
-            user_profile.sex = sex
-            user_profile.age = age
-            user_profile.save()
+        # Process avatar if provided
+        if 'avatar' in request.FILES:
+            profile.avatar = request.FILES['avatar']
 
-            messages.success(request, "Your fitness profile has been updated!")
-        except (ValueError, TypeError):
-            messages.error(
-                request, "Invalid data provided. Please check your inputs.")
+        # Process other fields
+        profile.height = request.POST.get('height')
+        profile.weight = request.POST.get('weight')
+        profile.sex = request.POST.get('sex')
+        profile.age = request.POST.get('age')
+        profile.save()
 
+        add_notification(request, "Profile saved successfully!", "success")
         return redirect('profile')
+    return redirect('profile')
 
 
 @login_required
 def update_profile(request):
-    user_profile = request.user.userprofile
+    if request.method == 'POST':
+        # Get the user profile
+        profile = request.user.userprofile
 
-    # Pre-fill the form with existing data
+        # Process avatar if provided
+        if 'avatar' in request.FILES:
+            profile.avatar = request.FILES['avatar']
+
+        # Process other fields
+        profile.height = request.POST.get('height')
+        profile.weight = request.POST.get('weight')
+        profile.sex = request.POST.get('sex')
+        profile.age = request.POST.get('age')
+        profile.save()
+
+        add_notification(request, "Profile updated successfully!", "success")
+        return redirect('profile')
+
+    # For GET requests, display the form with current values
     context = {
-        'user_has_data': False,  # Show form instead of data
-        'height': user_profile.height,
-        'weight': user_profile.weight,
-        'sex': user_profile.sex,
+        'height': request.user.userprofile.height,
+        'weight': request.user.userprofile.weight,
+        'sex': request.user.userprofile.sex,
+        'age': request.user.userprofile.age,
     }
-
-    return render(request, 'fitness/profile.html', context)
+    return render(request, 'fitness/update_profile.html', context)
 
 
 @login_required
@@ -1001,7 +1012,7 @@ def diet_tracker(request):
                 model="gpt-4o",
                 messages=messages,
                 temperature=0.7,
-                max_tokens=500,
+                max_tokens=1000,
             )
 
             # Extract the response content
@@ -1618,7 +1629,7 @@ def health_tracker(request):
                         {"role": "user", "content": content}
                     ],
                     temperature=0.7,
-                    max_tokens=500,
+                    max_tokens=1000,
                     response_format={"type": "json_object"}
                 )
 

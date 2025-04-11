@@ -91,6 +91,30 @@
           {% if user_has_data %}
           <!-- Display user data -->
           <div class="space-y-6">
+            <!-- Add avatar display at the top -->
+            <div class="flex justify-center">
+              {% if user.userprofile.avatar %}
+                <img src="{{ user.userprofile.avatar.url }}" alt="Profile Avatar" class="h-32 w-32 rounded-full object-cover border-4 border-blue-600">
+              {% else %}
+                <div class="h-32 w-32 rounded-full bg-gray-600 flex items-center justify-center text-3xl text-gray-300 border-4 border-blue-600">
+                  {{ user.username.0|upper }}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="flex justify-center">
+              <form method="post" action="{% url 'save_profile' %}" enctype="multipart/form-data" class="space-y-2">
+                {% csrf_token %}
+                <div class="flex items-center space-x-3">
+                  <label for="avatar" class="text-sm font-medium text-gray-300 cursor-pointer bg-blue-600 hover:bg-blue-700 py-1 px-3 rounded transition duration-300">
+                    Change Avatar
+                  </label>
+                  <input type="file" id="avatar" name="avatar" class="hidden" accept="image/*" onchange="this.form.submit()">
+                  <span id="file-name" class="text-sm text-gray-400">No file selected</span>
+                </div>
+              </form>
+            </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                 <h3 class="text-gray-400 text-sm font-medium">Height</h3>
@@ -152,11 +176,25 @@
           
           {% else %}
           <!-- Input form for new data -->
-          <form method="post" action="{% url 'save_profile' %}" class="space-y-6">
+          <form method="post" action="{% url 'save_profile' %}" enctype="multipart/form-data" class="space-y-6">
             {% csrf_token %}
             <div class="space-y-4">
               <h2 class="text-xl font-semibold text-gray-200">Enter Your Information</h2>
               <p class="text-gray-400">We'll calculate your BMI and estimate body fat percentage</p>
+              
+              <!-- Add avatar upload field -->
+              <div class="flex justify-center mb-4">
+                <div class="space-y-2">
+                  <label for="new-avatar" class="block text-sm font-medium text-gray-300">Profile Picture (Optional)</label>
+                  <div class="flex items-center space-x-3">
+                    <label for="new-avatar" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded transition duration-300">
+                      Choose File
+                    </label>
+                    <input type="file" id="new-avatar" name="avatar" class="hidden" accept="image/*">
+                    <span id="new-file-name" class="text-sm text-gray-400">No file selected</span>
+                  </div>
+                </div>
+              </div>
               
               <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -206,5 +244,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Add JavaScript at the end of the body -->
+    <script>
+      // Display selected filename
+      document.getElementById('new-avatar')?.addEventListener('change', function() {
+        document.getElementById('new-file-name').textContent = this.files[0]?.name || 'No file selected';
+      });
+      
+      document.getElementById('avatar')?.addEventListener('change', function() {
+        document.getElementById('file-name').textContent = this.files[0]?.name || 'No file selected';
+      });
+    </script>
   </body>
 </html>

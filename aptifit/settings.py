@@ -276,3 +276,6 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
     CSRF_TRUSTED_ORIGINS = ['https://aptifit.onrender.com']
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Update Profile</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="bg-gray-900 min-h-screen text-gray-200">
+    <!-- Navigation bar -->
+    <nav class="bg-gray-800 border-b border-gray-700">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex-shrink-0 font-bold text-xl text-blue-400">
+            AptiFit
+          </div>
+          <div class="flex space-x-2 md:space-x-4 items-center">
+            <a href="{% url 'index' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Home
+            </a>
+            
+            {% if missing_fields %}
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed">
+              <i class="fas fa-lock mr-1"></i> Diet Tracker
+            </span>
+            <span class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 cursor-not-allowed">
+              <i class="fas fa-lock mr-1"></i> Chatbot
+            </span>
+            {% else %}
+            <a href="{% url 'diet_tracker' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Diet Tracker
+            </a>
+            <a href="{% url 'chatbot' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Chatbot
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'profile' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-700 text-white">
+              Profile: {{ user.username }}
+            </a>
+            <div class="relative">
+              <a href="#" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+                <i class="fas fa-bell"></i>
+                {% if has_notifications %}
+                <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                {% endif %}
+              </a>
+            </div>
+            <a href="{% url 'change_password' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+              Change Password
+            </a>
+            <a href="{% url 'logout' %}" class="px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900 hover:text-red-200 transition duration-300">
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="max-w-2xl mx-auto bg-gray-800 rounded-lg shadow-xl overflow-hidden border border-gray-700">
+        <div class="bg-blue-800 text-white p-6">
+          <h1 class="text-2xl md:text-3xl font-bold">Update Your Profile</h1>
+        </div>
+        
+        <!-- Show messages if any -->
+        {% if messages %}
+        <div class="p-4">
+          {% for message in messages %}
+          <div class="p-4 mb-4 rounded-lg {% if message.tags == 'success' %}bg-green-900 text-green-200{% elif message.tags == 'error' %}bg-red-900 text-red-200{% else %}bg-blue-900 text-blue-200{% endif %}">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="p-6">
+          <!-- Input form for updating profile data -->
+          <form method="post" action="{% url 'update_profile' %}" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            <div class="space-y-4">
+              <h2 class="text-xl font-semibold text-gray-200">Update Your Information</h2>
+              
+              <!-- Add avatar upload field -->
+              <div class="flex justify-center mb-4">
+                <div class="space-y-2">
+                  <label for="avatar" class="block text-sm font-medium text-gray-300">Profile Picture</label>
+                  <div class="flex flex-col items-center space-y-4">
+                    {% if user.userprofile.avatar %}
+                      <img src="{{ user.userprofile.avatar.url }}" alt="Current Avatar" class="h-32 w-32 rounded-full object-cover border-4 border-blue-600">
+                    {% else %}
+                      <div class="h-32 w-32 rounded-full bg-gray-600 flex items-center justify-center text-3xl text-gray-300 border-4 border-blue-600">
+                        {{ user.username.0|upper }}
+                      </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center space-x-3">
+                      <label for="avatar" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded transition duration-300">
+                        Choose New Image
+                      </label>
+                      <input type="file" id="avatar" name="avatar" class="hidden" accept="image/*">
+                      <span id="file-name" class="text-sm text-gray-400">No file selected</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label for="height" class="block text-sm font-medium text-gray-300">Height (cm)</label>
+                  <input type="number" id="height" name="height" required step="0.1" min="100" max="250" 
+                         value="{{ height|default:'' }}"
+                         class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label for="weight" class="block text-sm font-medium text-gray-300">Weight (kg)</label>
+                  <input type="number" id="weight" name="weight" required step="0.1" min="30" max="300" 
+                         value="{{ weight|default:'' }}"
+                         class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label for="age" class="block text-sm font-medium text-gray-300">Age</label>
+                  <input type="number" id="age" name="age" required min="15" max="120" 
+                         value="{{ age|default:'' }}"
+                         class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Sex</label>
+                <div class="mt-2 flex items-center space-x-6">
+                  <div class="flex items-center">
+                    <input id="male" name="sex" type="radio" value="male" required
+                           {% if sex == 'male' %}checked{% endif %}
+                           class="h-4 w-4 bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                    <label for="male" class="ml-2 block text-sm text-gray-300">Male</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input id="female" name="sex" type="radio" value="female" required
+                           {% if sex == 'female' %}checked{% endif %}
+                           class="h-4 w-4 bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                    <label for="female" class="ml-2 block text-sm text-gray-300">Female</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex space-x-4">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Update Information
+              </button>
+              <a href="{% url 'profile' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add JavaScript at the end of the body -->
+    <script>
+      // Display selected filename
+      document.getElementById('avatar')?.addEventListener('change', function() {
+        document.getElementById('file-name').textContent = this.files[0]?.name || 'No file selected';
+      });
+    </script>
+  </body>
+</html> 
