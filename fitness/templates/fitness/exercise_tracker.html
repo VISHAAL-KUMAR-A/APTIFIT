@@ -953,7 +953,20 @@
         if (document.querySelector('.day-tab')) {
           // Short delay to ensure DOM is fully loaded
           setTimeout(() => {
-            getExerciseDetails();
+            // Get current day of week and select that tab if it exists
+            const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+            const todayName = daysOfWeek[today];
+            
+            // Try to find tab for current day
+            const todayTab = document.querySelector(`.day-tab[data-day="${todayName}"]`);
+            if (todayTab) {
+              // Trigger click on today's tab
+              todayTab.click();
+            } else {
+              // Fall back to default behavior (first tab)
+              getExerciseDetails();
+            }
           }, 500);
         }
       });
