@@ -24,6 +24,8 @@ from dotenv import load_dotenv
 from fitness.models import DietPlan, DailyDietPlan, ExercisePlan, ExerciseDay, Exercise, ExerciseTip, ExercisePrecaution, HealthData, CommunityMessage
 import re
 from django.db.models import Q
+from django.conf import settings
+import json
 
 
 # Create your views here.
@@ -1888,3 +1890,109 @@ def create_test_user():
         return "Test user created successfully"
     except Exception as e:
         return f"Error creating test user: {str(e)}"
+
+
+@login_required
+def get_diet_description(request):
+    """Get AI-generated description of daily diet plan that's optimized for speech"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            # Create a prompt for OpenAI
+            prompt = f"""
+            You are a friendly AI nutritionist assistant for the AptiFit app. 
+            Describe the following diet plan for {data['day']} in a conversational, encouraging way:
+            
+            Breakfast: {data['breakfast']} ({data['breakfast_calories']} calories)
+            Lunch: {data['lunch']} ({data['lunch_calories']} calories)
+            Dinner: {data['dinner']} ({data['dinner_calories']} calories)
+            Snacks: {data['snacks']} ({data['snacks_calories']} calories)
+            Total calories: {data['total_calories']}
+            
+            Important: Your response will be read aloud by a text-to-speech system, so:
+            1. Use natural, conversational language with proper pauses (commas, periods)
+            2. Keep your response under 100 words
+            3. Be friendly and mention specific foods from the plan
+            4. Give 1-2 quick health benefits of a key ingredient in the diet
+            5. End with a brief motivational note
+            """
+
+            # Get API key from environment variable or settings
+            api_key = os.environ.get(
+                'OPENAI_API_KEY') or settings.OPENAI_API_KEY
+
+            client = openai.OpenAI(api_key=api_key)
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful fitness assistant that gives brief, friendly diet descriptions optimized for text-to-speech."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1000,
+                temperature=0.7
+            )
+
+            message = response.choices[0].message.content.strip()
+
+            return JsonResponse({'message': message})
+
+        except Exception as e:
+            return JsonResponse({
+                'message': f"For {data['day']}, I've prepared a meal plan with {data['breakfast']} for breakfast, {data['lunch']} for lunch, and {data['dinner']} for dinner. Don't forget your snacks: {data['snacks']}. Your total calorie intake will be approximately {data['total_calories']} calories. Enjoy your meals and stay healthy!"
+            })
+
+    return JsonResponse({'message': 'Invalid request method'}, status=400)
+
+
+@login_required
+def get_exercise_description(request):
+    """Get AI-generated description of exercise plan for a specific day"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            # Create a prompt for OpenAI
+            prompt = f"""
+            You are a friendly AI fitness trainer assistant for the AptiFit app. 
+            Describe the following {data['fitness_level']} level exercise plan for {data['day_name']} in a motivational, encouraging way:
+            
+            Day: {data['day_title']}
+            Warmup: {data['warmup']}
+            Exercises: {data['exercises']}
+            Cooldown: {data['cooldown']}
+            
+            Important: Your response will be read aloud by a text-to-speech system, so:
+            1. Use natural, conversational language with proper pauses (commas, periods)
+            2. Keep your response under 100 words
+            3. Be enthusiastic and motivational like a personal trainer
+            4. Mention 1-2 benefits of today's specific exercises
+            5. Include a quick form tip for one of the exercises
+            6. End with a brief motivational statement
+            """
+
+            # Get API key from environment variable or settings
+            api_key = os.environ.get(
+                'OPENAI_API_KEY') or settings.OPENAI_API_KEY
+
+            client = openai.OpenAI(api_key=api_key)
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful fitness trainer that gives brief, motivational exercise descriptions optimized for text-to-speech."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1000,
+                temperature=0.7
+            )
+
+            message = response.choices[0].message.content.strip()
+
+            return JsonResponse({'message': message})
+
+        except Exception as e:
+            return JsonResponse({
+                'message': f"Today's workout focuses on {data['day_title']}. Start with {data['warmup']}, then perform exercises including {data['exercises']}. Remember to maintain proper form and control your breathing. Finish with {data['cooldown']} to help your muscles recover. You've got this!"
+            })
+
+    return JsonResponse({'message': 'Invalid request method'}, status=400)

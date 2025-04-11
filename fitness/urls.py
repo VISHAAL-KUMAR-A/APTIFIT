@@ -48,4 +48,8 @@ urlpatterns = [
     path('health-tracker/', views.health_tracker, name='health_tracker'),
     path('community/', views.community, name='community'),
     path('send-message/', views.send_message, name='send_message'),
+    path('get-diet-description/', views.get_diet_description,
+         name='get_diet_description'),
+    path('get-exercise-description/', views.get_exercise_description,
+         name='get_exercise_description'),
 ]

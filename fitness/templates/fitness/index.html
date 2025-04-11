@@ -38,6 +38,87 @@
         background: linear-gradient(45deg, rgba(239, 68, 68, 1) 0%, rgba(253, 126, 20, 1) 100%);
         z-index: 10;
       }
+      
+      /* AI Avatar Styles */
+      #ai-avatar {
+        position: relative;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        transition: all 0.5s ease;
+      }
+      
+      .avatar-shape {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: all 0.8s ease;
+      }
+      
+      .avatar-shape:nth-child(1) {
+        width: 60%;
+        height: 60%;
+        top: 20%;
+        left: 20%;
+      }
+      
+      .avatar-shape:nth-child(2) {
+        width: 40%;
+        height: 40%;
+        top: 30%;
+        left: 30%;
+      }
+      
+      .avatar-shape:nth-child(3) {
+        width: 25%;
+        height: 25%;
+        top: 37.5%;
+        left: 37.5%;
+      }
+      
+      @keyframes morph1 {
+        0%, 100% { border-radius: 50%; transform: scale(1); }
+        25% { border-radius: 25% 75% 70% 30% / 30% 30% 70% 70%; transform: scale(0.9) rotate(10deg); }
+        50% { border-radius: 70% 30% 30% 70% / 70% 30% 70% 30%; transform: scale(1.1) rotate(-10deg); }
+        75% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: scale(0.9) rotate(10deg); }
+      }
+      
+      @keyframes morph2 {
+        0%, 100% { border-radius: 50%; transform: scale(1); }
+        25% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: scale(1.1) rotate(-5deg); }
+        50% { border-radius: 40% 60% 30% 70% / 60% 40% 60% 40%; transform: scale(0.9) rotate(5deg); }
+        75% { border-radius: 60% 40% 60% 30% / 30% 60% 40% 70%; transform: scale(1.1) rotate(-5deg); }
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 3px 1px rgba(59, 130, 246, 0.4); }
+        50% { box-shadow: 0 0 8px 3px rgba(59, 130, 246, 0.7); }
+      }
+      
+      .animate-avatar .avatar-shape:nth-child(1) {
+        animation: morph1 8s ease infinite, pulse-glow 3s ease infinite;
+      }
+      
+      .animate-avatar .avatar-shape:nth-child(2) {
+        animation: morph2 12s ease infinite;
+      }
+      
+      .animate-avatar .avatar-shape:nth-child(3) {
+        animation: pulse-glow 2s ease infinite;
+      }
+      
+      /* Additional speaking animation */
+      .animate-avatar .avatar-shape {
+        transition: transform 0.3s ease;
+      }
+      
+      /* Sound toggle button animation */
+      @keyframes sound-wave {
+        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+        100% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+      }
+      
+      #toggle-sound-btn:active i {
+        animation: sound-wave 0.5s ease-out;
+      }
     </style>
   </head>
   <body class="bg-gray-900 min-h-screen text-gray-200">
@@ -126,6 +207,34 @@
                 <i class="fas fa-edit mr-1"></i> Edit
               </a>
               {% endif %}
+            </div>
+            
+            <!-- AI Avatar for Diet Description -->
+            <div id="ai-avatar-container" class="relative bg-gradient-to-r from-gray-900 to-gray-800 p-4 border-b border-gray-700">
+              <div class="flex items-center">
+                <div id="ai-avatar" class="w-16 h-16 rounded-full bg-blue-600 flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden relative">
+                  <div class="avatar-shape"></div>
+                  <div class="avatar-shape"></div>
+                  <div class="avatar-shape"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="bg-gray-700 rounded-lg p-3 relative">
+                    <div class="absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2 w-0 h-0 border-t-8 border-r-8 border-b-8 border-transparent border-r-gray-700"></div>
+                    <p id="ai-message" class="text-gray-300">Loading your diet details...</p>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1 flex items-center">
+                    <i class="fas fa-robot mr-1"></i> AptiFit Assistant
+                    <div class="ml-auto flex items-center">
+                      <button id="play-again-btn" class="text-blue-400 hover:text-blue-300 hidden mr-3">
+                        <i class="fas fa-play-circle mr-1"></i> Play Again
+                      </button>
+                      <button id="toggle-sound-btn" class="text-blue-400 hover:text-blue-300">
+                        <i class="fas fa-volume-up"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- Days of week navigation -->
@@ -444,6 +553,184 @@
           notificationIndicator.style.display = 'none';
         }
         */
+      });
+      
+      // AI Avatar and speech functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const avatar = document.getElementById('ai-avatar');
+        const aiMessage = document.getElementById('ai-message');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const toggleSoundBtn = document.getElementById('toggle-sound-btn');
+        
+        let isSpeaking = false;
+        let isSoundEnabled = true;
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        
+        function startAvatarAnimation() {
+          avatar.classList.add('animate-avatar');
+        }
+        
+        function stopAvatarAnimation() {
+          avatar.classList.remove('animate-avatar');
+        }
+        
+        function updateSoundButton() {
+          const icon = toggleSoundBtn.querySelector('i');
+          if (isSoundEnabled) {
+            icon.className = 'fas fa-volume-up';
+            toggleSoundBtn.setAttribute('title', 'Mute');
+          } else {
+            icon.className = 'fas fa-volume-mute';
+            toggleSoundBtn.setAttribute('title', 'Unmute');
+          }
+        }
+        
+        function speakText(text) {
+          if (!isSoundEnabled || !speechSynthesis) return;
+          
+          // Cancel any ongoing speech
+          if (isSpeaking) {
+            speechSynthesis.cancel();
+          }
+          
+          // Create a new utterance
+          const utterance = new SpeechSynthesisUtterance(text);
+          currentUtterance = utterance;
+          
+          // Configure voice settings
+          utterance.rate = 1.0;  // Normal speed
+          utterance.pitch = 1.0; // Normal pitch
+          
+          // Get available voices and try to set a natural sounding one
+          const voices = speechSynthesis.getVoices();
+          if (voices.length > 0) {
+            // Prefer English voices
+            const englishVoices = voices.filter(voice => 
+              voice.lang.includes('en') && (voice.name.includes('Natural') || voice.name.includes('Neural'))
+            );
+            
+            if (englishVoices.length > 0) {
+              utterance.voice = englishVoices[0];
+            }
+          }
+          
+          // Set speech events to sync with avatar animation
+          utterance.onstart = function() {
+            isSpeaking = true;
+            startAvatarAnimation();
+          };
+          
+          utterance.onend = function() {
+            isSpeaking = false;
+            stopAvatarAnimation();
+            playAgainBtn.classList.remove('hidden');
+          };
+          
+          utterance.onerror = function() {
+            isSpeaking = false;
+            stopAvatarAnimation();
+            playAgainBtn.classList.remove('hidden');
+          };
+          
+          // Start speaking
+          speechSynthesis.speak(utterance);
+        }
+        
+        function getDietDetails() {
+          startAvatarAnimation();
+          playAgainBtn.classList.add('hidden');
+          
+          // Show loading message
+          aiMessage.textContent = "Analyzing your diet plan for today...";
+          
+          // Get diet plan details from the page
+          const hasDietPlan = {% if daily_plan %}true{% else %}false{% endif %};
+          
+          if (!hasDietPlan) {
+            const message = "I don't see a diet plan for today. Would you like me to help you create one?";
+            aiMessage.textContent = message;
+            speakText(message);
+            return;
+          }
+          
+          const dietData = {
+            day: "{{ current_day }}",
+            breakfast: "{{ daily_plan.breakfast|default:'Not specified'|escapejs }}",
+            breakfast_calories: "{{ daily_plan.breakfast_calories|default:'0' }}",
+            lunch: "{{ daily_plan.lunch|default:'Not specified'|escapejs }}",
+            lunch_calories: "{{ daily_plan.lunch_calories|default:'0' }}",
+            dinner: "{{ daily_plan.dinner|default:'Not specified'|escapejs }}",
+            dinner_calories: "{{ daily_plan.dinner_calories|default:'0' }}",
+            snacks: "{{ daily_plan.snacks|default:'Not specified'|escapejs }}",
+            snacks_calories: "{{ daily_plan.snacks_calories|default:'0' }}",
+            total_calories: "{{ daily_plan.total_calories|default:'0' }}"
+          };
+          
+          // Fetch AI response about the diet
+          fetch('{% url "get_diet_description" %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(dietData)
+          })
+          .then(response => response.json())
+          .then(data => {
+            aiMessage.textContent = data.message;
+            speakText(data.message);
+          })
+          .catch(error => {
+            console.error('Error fetching diet description:', error);
+            const errorMessage = "I'm having trouble analyzing your diet plan right now. Please try again later.";
+            aiMessage.textContent = errorMessage;
+            speakText(errorMessage);
+          });
+        }
+        
+        // Initialize voices for Safari
+        if (speechSynthesis) {
+          speechSynthesis.onvoiceschanged = function() {
+            speechSynthesis.getVoices();
+          };
+        }
+        
+        // Toggle sound button
+        toggleSoundBtn.addEventListener('click', function() {
+          isSoundEnabled = !isSoundEnabled;
+          updateSoundButton();
+          
+          if (!isSoundEnabled && isSpeaking) {
+            speechSynthesis.cancel();
+            isSpeaking = false;
+            stopAvatarAnimation();
+            playAgainBtn.classList.remove('hidden');
+          } else if (isSoundEnabled && !isSpeaking) {
+            speakText(aiMessage.textContent);
+          }
+        });
+        
+        // Start on page load
+        getDietDetails();
+        
+        // Play again button
+        playAgainBtn.addEventListener('click', function() {
+          getDietDetails();
+        });
+        
+        // Add more animation when speaking
+        function pulseAvatar() {
+          if (isSpeaking) {
+            const shapes = avatar.querySelectorAll('.avatar-shape');
+            shapes.forEach((shape, index) => {
+              const scale = 0.9 + Math.random() * 0.2;
+              shape.style.transform = `scale(${scale})`;
+            });
+          }
+          requestAnimationFrame(pulseAvatar);
+        }
+        pulseAvatar();
       });
     </script>
   </body>

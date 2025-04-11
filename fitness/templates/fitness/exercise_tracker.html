@@ -7,6 +7,76 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+      /* ... existing styles ... */
+      
+      /* AI Avatar Styles */
+      #exercise-ai-avatar {
+        position: relative;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        transition: all 0.5s ease;
+      }
+      
+      .avatar-shape {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: all 0.8s ease;
+      }
+      
+      .avatar-shape:nth-child(1) {
+        width: 60%;
+        height: 60%;
+        top: 20%;
+        left: 20%;
+      }
+      
+      .avatar-shape:nth-child(2) {
+        width: 40%;
+        height: 40%;
+        top: 30%;
+        left: 30%;
+      }
+      
+      .avatar-shape:nth-child(3) {
+        width: 25%;
+        height: 25%;
+        top: 37.5%;
+        left: 37.5%;
+      }
+      
+      @keyframes morph1 {
+        0%, 100% { border-radius: 50%; transform: scale(1); }
+        25% { border-radius: 25% 75% 70% 30% / 30% 30% 70% 70%; transform: scale(0.9) rotate(10deg); }
+        50% { border-radius: 70% 30% 30% 70% / 70% 30% 70% 30%; transform: scale(1.1) rotate(-10deg); }
+        75% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: scale(0.9) rotate(10deg); }
+      }
+      
+      @keyframes morph2 {
+        0%, 100% { border-radius: 50%; transform: scale(1); }
+        25% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: scale(1.1) rotate(-5deg); }
+        50% { border-radius: 40% 60% 30% 70% / 60% 40% 60% 40%; transform: scale(0.9) rotate(5deg); }
+        75% { border-radius: 60% 40% 60% 30% / 30% 60% 40% 70%; transform: scale(1.1) rotate(-5deg); }
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 3px 1px rgba(59, 130, 246, 0.4); }
+        50% { box-shadow: 0 0 8px 3px rgba(59, 130, 246, 0.7); }
+      }
+      
+      .animate-avatar .avatar-shape:nth-child(1) {
+        animation: morph1 8s ease infinite, pulse-glow 3s ease infinite;
+      }
+      
+      .animate-avatar .avatar-shape:nth-child(2) {
+        animation: morph2 12s ease infinite;
+      }
+      
+      .animate-avatar .avatar-shape:nth-child(3) {
+        animation: pulse-glow 2s ease infinite;
+      }
+    </style>
   </head>
   <body class="bg-gray-900 min-h-screen text-gray-200">
     <!-- Navigation bar -->
@@ -203,6 +273,34 @@
               <a href="{% url 'exercise_tracker' %}?new_plan=true" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition duration-300">
                 <i class="fas fa-sync-alt mr-1"></i> Create New Plan
               </a>
+            </div>
+            
+            <!-- AI Avatar for Exercise Description -->
+            <div id="exercise-ai-avatar-container" class="relative bg-gradient-to-r from-gray-900 to-gray-800 p-4 border-b border-gray-700">
+              <div class="flex items-center">
+                <div id="exercise-ai-avatar" class="w-16 h-16 rounded-full bg-blue-600 flex-shrink-0 mr-4 flex items-center justify-center overflow-hidden relative">
+                  <div class="avatar-shape"></div>
+                  <div class="avatar-shape"></div>
+                  <div class="avatar-shape"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="bg-gray-700 rounded-lg p-3 relative">
+                    <div class="absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2 w-0 h-0 border-t-8 border-r-8 border-b-8 border-transparent border-r-gray-700"></div>
+                    <p id="exercise-ai-message" class="text-gray-300">Loading your exercise details...</p>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1 flex items-center">
+                    <i class="fas fa-robot mr-1"></i> AptiFit Trainer
+                    <div class="ml-auto flex items-center">
+                      <button id="exercise-play-again-btn" class="text-blue-400 hover:text-blue-300 hidden mr-3">
+                        <i class="fas fa-play-circle mr-1"></i> Play Again
+                      </button>
+                      <button id="exercise-toggle-sound-btn" class="text-blue-400 hover:text-blue-300">
+                        <i class="fas fa-volume-up"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div class="p-6">
@@ -561,8 +659,303 @@
             document.getElementById(`day-${day}`).classList.remove('hidden');
             tab.classList.add('active-tab', 'bg-blue-900', 'text-white');
             tab.classList.remove('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+            
+            // Update the AI description when changing tabs
+            getExerciseDetails(day);
           });
         });
+        
+        // AI Avatar Animation Styles - add these if not already present
+        const avatarStyles = `
+          @keyframes morph1 {
+            0%, 100% { border-radius: 50%; transform: scale(1); }
+            25% { border-radius: 25% 75% 70% 30% / 30% 30% 70% 70%; transform: scale(0.9) rotate(10deg); }
+            50% { border-radius: 70% 30% 30% 70% / 70% 30% 70% 30%; transform: scale(1.1) rotate(-10deg); }
+            75% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: scale(0.9) rotate(10deg); }
+          }
+          
+          @keyframes morph2 {
+            0%, 100% { border-radius: 50%; transform: scale(1); }
+            25% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: scale(1.1) rotate(-5deg); }
+            50% { border-radius: 40% 60% 30% 70% / 60% 40% 60% 40%; transform: scale(0.9) rotate(5deg); }
+            75% { border-radius: 60% 40% 60% 30% / 30% 60% 40% 70%; transform: scale(1.1) rotate(-5deg); }
+          }
+          
+          @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 3px 1px rgba(59, 130, 246, 0.4); }
+            50% { box-shadow: 0 0 8px 3px rgba(59, 130, 246, 0.7); }
+          }
+          
+          .animate-avatar .avatar-shape:nth-child(1) {
+            animation: morph1 8s ease infinite, pulse-glow 3s ease infinite;
+          }
+          
+          .animate-avatar .avatar-shape:nth-child(2) {
+            animation: morph2 12s ease infinite;
+          }
+          
+          .animate-avatar .avatar-shape:nth-child(3) {
+            animation: pulse-glow 2s ease infinite;
+          }
+        `;
+        
+        // Check if we need to add the styles
+        if (!document.getElementById('avatar-animation-styles')) {
+          const styleElement = document.createElement('style');
+          styleElement.id = 'avatar-animation-styles';
+          styleElement.textContent = avatarStyles;
+          document.head.appendChild(styleElement);
+        }
+        
+        // AI Avatar functionality
+        const exerciseAvatar = document.getElementById('exercise-ai-avatar');
+        const exerciseAiMessage = document.getElementById('exercise-ai-message');
+        const exercisePlayAgainBtn = document.getElementById('exercise-play-again-btn');
+        const exerciseToggleSoundBtn = document.getElementById('exercise-toggle-sound-btn');
+        
+        // Only proceed if we found the avatar elements
+        if (!exerciseAvatar || !exerciseAiMessage) {
+          console.error('Avatar elements not found!');
+          return;
+        }
+        
+        let isSpeaking = false;
+        let isSoundEnabled = true;
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        
+        function startAvatarAnimation() {
+          exerciseAvatar.classList.add('animate-avatar');
+        }
+        
+        function stopAvatarAnimation() {
+          exerciseAvatar.classList.remove('animate-avatar');
+        }
+        
+        function updateSoundButton() {
+          const icon = exerciseToggleSoundBtn.querySelector('i');
+          if (isSoundEnabled) {
+            icon.className = 'fas fa-volume-up';
+            exerciseToggleSoundBtn.setAttribute('title', 'Mute');
+          } else {
+            icon.className = 'fas fa-volume-mute';
+            exerciseToggleSoundBtn.setAttribute('title', 'Unmute');
+          }
+        }
+        
+        function speakText(text) {
+          if (!isSoundEnabled || !speechSynthesis) return;
+          
+          // Cancel any ongoing speech
+          if (isSpeaking) {
+            speechSynthesis.cancel();
+          }
+          
+          // Create a new utterance
+          const utterance = new SpeechSynthesisUtterance(text);
+          currentUtterance = utterance;
+          
+          // Configure voice settings
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
+          
+          // Get available voices
+          let voices = speechSynthesis.getVoices();
+          if (voices.length === 0) {
+            // Try getting voices again after a short delay
+            setTimeout(() => {
+              voices = speechSynthesis.getVoices();
+              if (voices.length > 0) {
+                setVoice(utterance, voices);
+              }
+            }, 200);
+          } else {
+            setVoice(utterance, voices);
+          }
+          
+          // Set speech events
+          utterance.onstart = function() {
+            isSpeaking = true;
+            startAvatarAnimation();
+          };
+          
+          utterance.onend = function() {
+            isSpeaking = false;
+            stopAvatarAnimation();
+            exercisePlayAgainBtn.classList.remove('hidden');
+          };
+          
+          utterance.onerror = function(event) {
+            console.error('Speech error:', event.error);
+            isSpeaking = false;
+            stopAvatarAnimation();
+            exercisePlayAgainBtn.classList.remove('hidden');
+          };
+          
+          // Start speaking
+          try {
+            speechSynthesis.speak(utterance);
+          } catch (e) {
+            console.error('Speech synthesis error:', e);
+            stopAvatarAnimation();
+            exercisePlayAgainBtn.classList.remove('hidden');
+          }
+        }
+        
+        function setVoice(utterance, voices) {
+          // Prefer English voices
+          const englishVoices = voices.filter(voice => 
+            voice.lang && voice.lang.includes('en') && 
+            (voice.name.includes('Natural') || voice.name.includes('Neural') || voice.name.includes('Google'))
+          );
+          
+          if (englishVoices.length > 0) {
+            utterance.voice = englishVoices[0];
+          }
+        }
+        
+        function getExerciseDetails(dayName) {
+          // Clear any previous content
+          exerciseAiMessage.textContent = "Analyzing your exercise plan...";
+          startAvatarAnimation();
+          exercisePlayAgainBtn.classList.add('hidden');
+          
+          // If no day provided, get the active day
+          if (!dayName) {
+            const activeTab = document.querySelector('.day-tab.active-tab');
+            if (activeTab) {
+              dayName = activeTab.getAttribute('data-day');
+            } else {
+              // Default to first day
+              const firstTab = document.querySelector('.day-tab');
+              if (firstTab) {
+                dayName = firstTab.getAttribute('data-day');
+              } else {
+                exerciseAiMessage.textContent = "No exercise plan found.";
+                stopAvatarAnimation();
+                return;
+              }
+            }
+          }
+          
+          // Get exercise data for the current day
+          const dayContent = document.getElementById(`day-${dayName}`);
+          if (!dayContent) {
+            exerciseAiMessage.textContent = "No exercise plan found for this day.";
+            stopAvatarAnimation();
+            return;
+          }
+          
+          try {
+            // Extract exercise information safely
+            const dayTitle = dayContent.querySelector('h3')?.textContent || dayName;
+            const warmupElement = dayContent.querySelector('h4:nth-of-type(1) + div p');
+            const warmup = warmupElement ? warmupElement.textContent : "warm-up routine";
+            
+            const cooldownElement = dayContent.querySelector('h4:nth-of-type(3) + div p') || 
+                                    dayContent.querySelector('h4:last-of-type + div p');
+            const cooldown = cooldownElement ? cooldownElement.textContent : "cool down routine";
+            
+            // Get exercises - limited to first 3 for simplicity
+            const exerciseElements = dayContent.querySelectorAll('.bg-gray-700 h5');
+            const exercises = Array.from(exerciseElements)
+                                   .slice(0, 3)  // Take only first 3 exercises to keep it brief
+                                   .map(el => el.textContent)
+                                   .join(', ');
+            
+            const exerciseData = {
+              fitness_level: "{{ fitness_level|default:'beginner' }}",
+              day_name: dayName,
+              day_title: dayTitle,
+              warmup: warmup,
+              cooldown: cooldown,
+              exercises: exercises || "exercises"
+            };
+            
+            // Use the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                              '{{ csrf_token }}';
+            
+            // Fetch AI response about the exercise plan
+            fetch('{% url "get_exercise_description" %}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+              },
+              body: JSON.stringify(exerciseData)
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => {
+              if (data && data.message) {
+                exerciseAiMessage.textContent = data.message;
+                speakText(data.message);
+              } else {
+                throw new Error('Invalid response format');
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching exercise description:', error);
+              // Use a fallback message with the data we extracted
+              const fallbackMessage = `Today's ${exerciseData.day_title} workout focuses on key exercises including ${exerciseData.exercises}. Start with a proper ${exerciseData.warmup}, and remember to finish with ${exerciseData.cooldown} to help your muscles recover. Keep your form tight and stay hydrated!`;
+              exerciseAiMessage.textContent = fallbackMessage;
+              speakText(fallbackMessage);
+            });
+          } catch (error) {
+            console.error('Error extracting exercise data:', error);
+            const errorMessage = `Let's focus on your workout for today. Make sure to warm up properly, maintain good form throughout your exercises, and cool down afterwards.`;
+            exerciseAiMessage.textContent = errorMessage;
+            speakText(errorMessage);
+          }
+        }
+        
+        // Initialize voices for Safari
+        if (speechSynthesis) {
+          speechSynthesis.onvoiceschanged = function() {
+            speechSynthesis.getVoices();
+          };
+        }
+        
+        // Toggle sound button
+        exerciseToggleSoundBtn.addEventListener('click', function() {
+          isSoundEnabled = !isSoundEnabled;
+          updateSoundButton();
+          
+          if (!isSoundEnabled && isSpeaking) {
+            speechSynthesis.cancel();
+            isSpeaking = false;
+            stopAvatarAnimation();
+            exercisePlayAgainBtn.classList.remove('hidden');
+          } else if (isSoundEnabled && !isSpeaking) {
+            speakText(exerciseAiMessage.textContent);
+          }
+        });
+        
+        // Play again button
+        exercisePlayAgainBtn.addEventListener('click', function() {
+          getExerciseDetails();
+        });
+        
+        // Add CSRF meta tag if it doesn't exist
+        if (!document.querySelector('meta[name="csrf-token"]')) {
+          const metaTag = document.createElement('meta');
+          metaTag.setAttribute('name', 'csrf-token');
+          metaTag.setAttribute('content', '{{ csrf_token }}');
+          document.head.appendChild(metaTag);
+        }
+        
+        // Start on page load if we have an exercise plan
+        if (document.querySelector('.day-tab')) {
+          // Short delay to ensure DOM is fully loaded
+          setTimeout(() => {
+            getExerciseDetails();
+          }, 500);
+        }
       });
     </script>
   </body>
