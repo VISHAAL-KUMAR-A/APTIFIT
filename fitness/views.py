@@ -26,6 +26,9 @@ import re
 from django.db.models import Q
 from django.conf import settings
 import json
+import requests
+from django.views.decorators.http import require_POST
+import time
 
 
 # Create your views here.
@@ -1996,3 +1999,143 @@ def get_exercise_description(request):
             })
 
     return JsonResponse({'message': 'Invalid request method'}, status=400)
+
+
+@login_required
+@require_POST
+def ask_openai_question(request):
+    try:
+        data = json.loads(request.body)
+        query = data.get('query', '')
+
+        if not query:
+            return JsonResponse({'error': 'No query provided'}, status=400)
+
+        # Get user profile information to personalize the response
+        user_profile = request.user.userprofile
+        user_context = ""
+
+        if user_profile.height and user_profile.weight and user_profile.sex and user_profile.age:
+            user_context = f"The user is {user_profile.age} years old, {user_profile.sex}, " \
+                f"{user_profile.height}cm tall, weighs {user_profile.weight}kg, " \
+                f"has a BMI of {user_profile.bmi}, and burns approximately " \
+                f"{user_profile.daily_calorie_needs} calories daily."
+
+        # Use the existing ask_openapi function
+        response_message = ask_openapi(
+            f"You are a fitness assistant. Answer this fitness or nutrition question concisely. User context: {user_context}. Question: {query}")
+
+        return JsonResponse({'message': response_message})
+
+    except Exception as e:
+        print(f"Error in ask_openai_question: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def create_talking_avatar(request):
+    try:
+        data = json.loads(request.body)
+        text = data.get('text', '')
+
+        if not text:
+            return JsonResponse({'error': 'No text provided'}, status=400)
+
+        # Limit text length to prevent issues
+        if len(text) > 300:
+            text = text[:297] + "..."
+
+        # Get credentials from settings
+        username = settings.DID_API_USERNAME
+        password = settings.DID_API_PASSWORD
+
+        # Create proper Basic Auth string
+        auth_string = f"{username}:{password}"
+        encoded_auth = base64.b64encode(auth_string.encode()).decode()
+
+        # D-ID API request
+        url = "https://api.d-id.com/talks"
+        payload = {
+            "source_url": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg",
+            "script": {
+                "type": "text",
+                "subtitles": "false",
+                "provider": {
+                    "type": "microsoft",
+                    "voice_id": "Sara"
+                },
+                "input": text,
+                "ssml": "false"
+            },
+            "config": {"fluent": "false"}
+        }
+
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "authorization": f"Basic {encoded_auth}"
+        }
+
+        # Make the initial request to create the talk
+        print("Sending request to D-ID API...")
+        response = requests.post(url, json=payload, headers=headers)
+        response_data = response.json()
+        print(f"D-ID initial response: {response_data}")
+
+        if "id" not in response_data:
+            print(f"Error in D-ID response: {response_data}")
+            return JsonResponse({
+                'success': False,
+                'error': response_data.get('message', 'Unknown error creating talk')
+            })
+
+        # Get the talk ID and poll for completion
+        talk_id = response_data["id"]
+        get_url = f"https://api.d-id.com/talks/{talk_id}"
+
+        # Poll with a timeout
+        max_attempts = 30
+        attempts = 0
+
+        while attempts < max_attempts:
+            attempts += 1
+            print(f"Polling attempt {attempts}...")
+
+            time.sleep(2)  # Wait between polls
+            get_response = requests.get(get_url, headers=headers)
+            get_data = get_response.json()
+
+            status = get_data.get("status")
+            print(f"Talk status: {status}")
+
+            if status == "done":
+                result_url = get_data.get("result_url")
+                print(f"Success! Result URL: {result_url}")
+                return JsonResponse({
+                    'success': True,
+                    'result_url': result_url
+                })
+            elif status == "error":
+                error_msg = get_data.get(
+                    "error", "Unknown error in processing")
+                print(f"D-ID error: {error_msg}")
+                return JsonResponse({
+                    'success': False,
+                    'error': error_msg
+                })
+
+            # Continue polling if not done yet
+
+        # If we get here, we timed out
+        return JsonResponse({
+            'success': False,
+            'error': 'Timeout waiting for video generation'
+        })
+
+    except Exception as e:
+        print(f"Exception in create_talking_avatar: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

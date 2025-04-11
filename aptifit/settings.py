@@ -294,3 +294,11 @@ if not DEBUG:
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
+
+# OpenAI API Key (already in your settings)
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
+# D-ID API Credentials
+DID_API_USERNAME = os.environ.get(
+    'DID_API_USERNAME')
+DID_API_PASSWORD = os.environ.get('DID_API_PASSWORD')

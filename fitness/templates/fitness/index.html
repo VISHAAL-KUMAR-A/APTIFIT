@@ -220,7 +220,15 @@
                 <div class="flex-1">
                   <div class="bg-gray-700 rounded-lg p-3 relative">
                     <div class="absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2 w-0 h-0 border-t-8 border-r-8 border-b-8 border-transparent border-r-gray-700"></div>
-                    <p id="ai-message" class="text-gray-300">Click "Ask AI" button to analyze your diet plan.</p>
+                    <p id="ai-message" class="text-gray-300">Click "Ask AI" button to analyze your diet plan or ask fitness questions.</p>
+                    <!-- D-ID Video Response Container -->
+                    <div id="d-id-response-container" class="mt-3 hidden overflow-hidden rounded-lg">
+                      <video id="d-id-video" controls autoplay class="w-full"></video>
+                      <div id="d-id-loading" class="flex items-center justify-center py-4">
+                        <div class="bg-blue-500 p-2 rounded-full animate-pulse mr-2"></div>
+                        <span>Processing video response...</span>
+                      </div>
+                    </div>
                   </div>
                   <div class="text-xs text-gray-500 mt-1 flex items-center">
                     <i class="fas fa-robot mr-1"></i> AptiFit Assistant
@@ -458,6 +466,78 @@
             </div>
           </div>
         </div>
+        
+        <!-- New row spanning the full width for the Talking Avatar feature -->
+        <div class="lg:col-span-3 mt-6">
+          <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-800 to-indigo-800 text-white p-4">
+              <h2 class="text-xl font-bold">AI Fitness Assistant</h2>
+            </div>
+            
+            <div class="p-5">
+              <div class="flex flex-col md:flex-row md:space-x-6">
+                <!-- Talking Avatar Container -->
+                <div class="md:w-1/2 mb-4 md:mb-0">
+                  <div id="talking-avatar-container" class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700 aspect-video flex items-center justify-center">
+                    <div id="avatar-placeholder" class="text-center p-6">
+                      <div class="w-24 h-24 mx-auto bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-robot text-3xl text-white"></i>
+                      </div>
+                      <p class="text-gray-400">Your AI fitness assistant will appear here</p>
+                    </div>
+                    <video id="talking-avatar-video" class="w-full hidden" controls></video>
+                  </div>
+                  
+                  <div class="mt-4 flex items-center justify-between">
+                    <span id="avatar-status" class="text-sm text-gray-400">Ready to assist you</span>
+                    <div>
+                      <button id="play-avatar-again" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm hidden">
+                        <i class="fas fa-redo mr-1"></i> Play Again
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Interaction Area -->
+                <div class="md:w-1/2">
+                  <div class="mb-4">
+                    <label for="fitness-query" class="block text-sm font-medium text-gray-400 mb-2">Ask about fitness, nutrition, or exercises</label>
+                    <textarea id="fitness-query" rows="3" class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              placeholder="e.g., What exercises are best for core strength?"></textarea>
+                  </div>
+                  
+                  <div class="flex space-x-2">
+                    <button id="submit-query" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded flex-1">
+                      <i class="fas fa-paper-plane mr-2"></i> Ask AI
+                    </button>
+                    <button id="voice-query" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">
+                      <i class="fas fa-microphone"></i>
+                    </button>
+                  </div>
+                  
+                  <div id="voice-status" class="mt-2 text-sm hidden">
+                    <div class="flex items-center text-indigo-400">
+                      <div class="animate-pulse mr-2">
+                        <i class="fas fa-microphone-alt"></i>
+                      </div>
+                      <span>Listening...</span>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-400 mb-2">Previous Responses</h3>
+                    <div id="previous-responses" class="space-y-3 max-h-40 overflow-y-auto">
+                      <!-- Responses will be populated here -->
+                      <div class="text-center text-gray-500 text-sm py-3">
+                        <i class="fas fa-history mr-1"></i> Your conversation history will appear here
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -563,13 +643,76 @@
         const avatar = document.getElementById('ai-avatar');
         const aiMessage = document.getElementById('ai-message');
         const askAiBtn = document.getElementById('ask-ai-btn');
+        const speechRecognitionBtn = document.getElementById('speech-recognition-btn');
         const playAgainBtn = document.getElementById('play-again-btn');
         const toggleSoundBtn = document.getElementById('toggle-sound-btn');
+        const dIdResponseContainer = document.getElementById('d-id-response-container');
+        const dIdVideo = document.getElementById('d-id-video');
+        const dIdLoading = document.getElementById('d-id-loading');
         
         let isSpeaking = false;
+        let isListening = false;
         let isSoundEnabled = true;
         let speechSynthesis = window.speechSynthesis;
         let currentUtterance = null;
+        let lastAIResponse = "";
+        let speechRecognition = null;
+        
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+          try {
+            if ('webkitSpeechRecognition' in window) {
+              speechRecognition = new webkitSpeechRecognition();
+            } else if ('SpeechRecognition' in window) {
+              speechRecognition = new SpeechRecognition();
+            } else {
+              return false;
+            }
+            
+            speechRecognition.continuous = false;
+            speechRecognition.interimResults = false;
+            speechRecognition.lang = 'en-US';
+            
+            speechRecognition.onstart = function() {
+              isListening = true;
+              speechRecognitionBtn.innerHTML = '<i class="fas fa-microphone-slash mr-1"></i> Listening...';
+              speechRecognitionBtn.classList.add('text-red-400');
+              aiMessage.textContent = "Listening... Say something about fitness or nutrition.";
+            };
+            
+            speechRecognition.onresult = function(event) {
+              if (event.results.length > 0) {
+                const transcript = event.results[0][0].transcript;
+                aiMessage.textContent = "You said: " + transcript;
+                setTimeout(() => {
+                  askOpenAI(transcript);
+                }, 500);
+              }
+            };
+            
+            speechRecognition.onerror = function(event) {
+              console.error('Speech recognition error:', event.error);
+              aiMessage.textContent = "Sorry, I couldn't understand that. Please try again.";
+              resetSpeechButton();
+            };
+            
+            speechRecognition.onend = function() {
+              isListening = false;
+              resetSpeechButton();
+            };
+            
+            return true;
+          } catch (error) {
+            console.error("Error initializing speech recognition:", error);
+            return false;
+          }
+        }
+        
+        function resetSpeechButton() {
+          isListening = false;
+          speechRecognitionBtn.innerHTML = '<i class="fas fa-microphone mr-1"></i> Speak';
+          speechRecognitionBtn.classList.remove('text-red-400');
+        }
         
         function startAvatarAnimation() {
           avatar.classList.add('animate-avatar');
@@ -641,10 +784,98 @@
           speechSynthesis.speak(utterance);
         }
         
+        // Function to create D-ID talking avatar
+        function createDIDTalkingAvatar(text) {
+          // Show loader
+          dIdResponseContainer.classList.remove('hidden');
+          dIdLoading.classList.remove('hidden');
+          dIdVideo.classList.add('hidden');
+          aiMessage.textContent = "Creating AI video response...";
+          startAvatarAnimation();
+          
+          // Send the request to the server-side endpoint that will call D-ID API
+          fetch("{% url 'create_talking_avatar' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ text: text })
+          })
+          .then(response => response.json())
+          .then(data => {
+            stopAvatarAnimation();
+            
+            if (data.success && data.result_url) {
+              // Show the video response
+              dIdLoading.classList.add('hidden');
+              dIdVideo.classList.remove('hidden');
+              dIdVideo.src = data.result_url;
+              aiMessage.textContent = text;
+              lastAIResponse = text;
+              playAgainBtn.classList.remove('hidden');
+            } else {
+              // If video creation failed, fallback to text and speech
+              console.error("Failed to create talking avatar:", data.error || "Unknown error");
+              dIdResponseContainer.classList.add('hidden');
+              aiMessage.textContent = text + " (Note: Video response could not be generated)";
+              speakText(text);
+            }
+          })
+          .catch(error => {
+            console.error("Error creating talking avatar:", error);
+            // Fallback to regular speech
+            stopAvatarAnimation();
+            dIdResponseContainer.classList.add('hidden');
+            aiMessage.textContent = text + " (Note: Video response could not be generated)";
+            speakText(text);
+          });
+        }
+        
+        function askOpenAI(userQuery) {
+          // Show loading message
+          aiMessage.textContent = "Thinking...";
+          startAvatarAnimation();
+          playAgainBtn.classList.add('hidden');
+          
+          // If there's no specific query, analyze the diet plan
+          if (!userQuery) {
+            getDietDetails();
+            return;
+          }
+          
+          // Fetch AI response
+          fetch("{% url 'ask_openai_question' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ query: userQuery })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.message) {
+              lastAIResponse = data.message;
+              // Create a talking avatar with the AI response
+              createDIDTalkingAvatar(data.message);
+            } else {
+              aiMessage.textContent = "Sorry, I couldn't generate a response.";
+              speakText("Sorry, I couldn't generate a response.");
+              stopAvatarAnimation();
+            }
+          })
+          .catch(error => {
+            console.error("Error asking OpenAI:", error);
+            aiMessage.textContent = "Sorry, there was an error processing your request.";
+            speakText("Sorry, there was an error processing your request.");
+            stopAvatarAnimation();
+          });
+        }
+        
         function getDietDetails() {
           startAvatarAnimation();
           playAgainBtn.classList.add('hidden');
-          askAiBtn.classList.add('hidden');
           
           // Show loading message
           aiMessage.textContent = "Analyzing your diet plan for today...";
@@ -655,7 +886,7 @@
           if (!hasDietPlan) {
             const message = "I don't see a diet plan for today. Would you like me to help you create one?";
             aiMessage.textContent = message;
-            speakText(message);
+            createDIDTalkingAvatar(message);
             return;
           }
           
@@ -683,16 +914,20 @@
           })
           .then(response => response.json())
           .then(data => {
-            aiMessage.textContent = data.message;
-            speakText(data.message);
+            lastAIResponse = data.message;
+            createDIDTalkingAvatar(data.message);
           })
           .catch(error => {
             console.error('Error fetching diet description:', error);
             const errorMessage = "I'm having trouble analyzing your diet plan right now. Please try again later.";
             aiMessage.textContent = errorMessage;
             speakText(errorMessage);
+            stopAvatarAnimation();
           });
         }
+        
+        // Initialize Speech Recognition
+        const speechRecognitionSupported = initSpeechRecognition();
         
         // Initialize voices for Safari
         if (speechSynthesis) {
@@ -711,23 +946,58 @@
             isSpeaking = false;
             stopAvatarAnimation();
             playAgainBtn.classList.remove('hidden');
-            askAiBtn.classList.add('hidden');
-          } else if (isSoundEnabled && !isSpeaking) {
-            speakText(aiMessage.textContent);
+          } else if (isSoundEnabled && lastAIResponse) {
+            speakText(lastAIResponse);
           }
         });
-        
-        // Don't start on page load - wait for button click
-        // getDietDetails();
         
         // Ask AI button
         askAiBtn.addEventListener('click', function() {
           getDietDetails();
         });
         
+        // Speech recognition button
+        if (speechRecognitionSupported) {
+          speechRecognitionBtn.addEventListener('click', function() {
+            if (isListening) {
+              // If already listening, stop it
+              try {
+                speechRecognition.stop();
+              } catch (error) {
+                console.error("Error stopping speech recognition:", error);
+              }
+              resetSpeechButton();
+            } else {
+              // Start listening
+              try {
+                speechRecognition.start();
+              } catch (error) {
+                console.error("Error starting speech recognition:", error);
+                aiMessage.textContent = "Sorry, I couldn't start speech recognition. Please try again.";
+                resetSpeechButton();
+              }
+            }
+          });
+        } else {
+          speechRecognitionBtn.disabled = true;
+          speechRecognitionBtn.classList.add('text-gray-500', 'cursor-not-allowed');
+          speechRecognitionBtn.title = "Speech recognition not supported in your browser";
+        }
+        
         // Play again button
         playAgainBtn.addEventListener('click', function() {
-          getDietDetails();
+          if (dIdVideo.src && !dIdVideo.classList.contains('hidden')) {
+            dIdVideo.play();
+          } else if (lastAIResponse) {
+            speakText(lastAIResponse);
+          } else {
+            getDietDetails();
+          }
+        });
+        
+        // Video ended event
+        dIdVideo.addEventListener('ended', function() {
+          playAgainBtn.classList.remove('hidden');
         });
         
         // Add more animation when speaking
@@ -742,6 +1012,232 @@
           requestAnimationFrame(pulseAvatar);
         }
         pulseAvatar();
+      });
+      
+      // Talking Avatar Feature - Completely Separate from Existing Features
+      document.addEventListener('DOMContentLoaded', function() {
+        const fitnessQuery = document.getElementById('fitness-query');
+        const submitQuery = document.getElementById('submit-query');
+        const voiceQuery = document.getElementById('voice-query');
+        const voiceStatus = document.getElementById('voice-status');
+        const avatarVideo = document.getElementById('talking-avatar-video');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const avatarStatus = document.getElementById('avatar-status');
+        const previousResponses = document.getElementById('previous-responses');
+        const playAvatarAgain = document.getElementById('play-avatar-again');
+        
+        let recognition = null;
+        let isListening = false;
+        let lastResponse = null;
+        
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+          if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+          } else if ('SpeechRecognition' in window) {
+            recognition = new SpeechRecognition();
+          } else {
+            return false;
+          }
+          
+          recognition.continuous = false;
+          recognition.interimResults = false;
+          recognition.lang = 'en-US';
+          
+          recognition.onstart = function() {
+            isListening = true;
+            voiceStatus.classList.remove('hidden');
+            voiceQuery.innerHTML = '<i class="fas fa-stop"></i>';
+            voiceQuery.classList.add('bg-red-600', 'hover:bg-red-700');
+            voiceQuery.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            avatarStatus.textContent = "Listening to your question...";
+          };
+          
+          recognition.onresult = function(event) {
+            if (event.results && event.results.length > 0) {
+              const transcript = event.results[0][0].transcript;
+              fitnessQuery.value = transcript;
+              submitFitnessQuery(transcript);
+            }
+          };
+          
+          recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+            resetVoiceButton();
+            avatarStatus.textContent = "Sorry, I couldn't understand that. Please try again.";
+          };
+          
+          recognition.onend = function() {
+            resetVoiceButton();
+          };
+          
+          return true;
+        }
+        
+        function resetVoiceButton() {
+          isListening = false;
+          voiceStatus.classList.add('hidden');
+          voiceQuery.innerHTML = '<i class="fas fa-microphone"></i>';
+          voiceQuery.classList.remove('bg-red-600', 'hover:bg-red-700');
+          voiceQuery.classList.add('bg-gray-700', 'hover:bg-gray-600');
+        }
+        
+        function submitFitnessQuery(query) {
+          if (!query || query.trim().length === 0) {
+            query = fitnessQuery.value.trim();
+          }
+          
+          if (!query || query.length === 0) {
+            avatarStatus.textContent = "Please enter a question first";
+            return;
+          }
+          
+          // Show loading state
+          submitQuery.disabled = true;
+          submitQuery.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+          avatarStatus.textContent = "Thinking about your question...";
+          avatarPlaceholder.classList.remove('hidden');
+          avatarVideo.classList.add('hidden');
+          playAvatarAgain.classList.add('hidden');
+          
+          // First get AI response
+          fetch("{% url 'ask_openai_question' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ query: query })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.message) {
+              // Now create the talking avatar with the AI response
+              avatarStatus.textContent = "Creating video response...";
+              
+              // Add to previous responses
+              addToPreviousResponses(query, data.message);
+              
+              // Create talking avatar
+              return fetch("{% url 'create_talking_avatar' %}", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ text: data.message })
+              });
+            } else {
+              throw new Error("No response from AI");
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            submitQuery.disabled = false;
+            submitQuery.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Ask AI';
+            
+            if (data.success && data.result_url) {
+              // Show the talking avatar
+              avatarPlaceholder.classList.add('hidden');
+              avatarVideo.classList.remove('hidden');
+              avatarVideo.src = data.result_url;
+              avatarVideo.play();
+              avatarStatus.textContent = "Playing response";
+              lastResponse = data.result_url;
+              playAvatarAgain.classList.remove('hidden');
+            } else {
+              // Handle error
+              avatarStatus.textContent = "Couldn't create video. " + (data.error || "Please try again.");
+              console.error("Error creating talking avatar:", data.error);
+            }
+          })
+          .catch(error => {
+            console.error("Error:", error);
+            submitQuery.disabled = false;
+            submitQuery.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Ask AI';
+            avatarStatus.textContent = "Sorry, there was an error. Please try again.";
+          });
+        }
+        
+        function addToPreviousResponses(question, answer) {
+          // Remove placeholder if present
+          const placeholder = previousResponses.querySelector('.text-center');
+          if (placeholder) {
+            placeholder.remove();
+          }
+          
+          // Create response element
+          const responseElement = document.createElement('div');
+          responseElement.className = 'bg-gray-700 rounded p-3 text-sm';
+          responseElement.innerHTML = `
+            <p class="font-semibold text-indigo-300 mb-1">You: ${question}</p>
+            <p class="text-gray-300">${answer}</p>
+          `;
+          
+          // Add to container
+          previousResponses.prepend(responseElement);
+          
+          // Limit to 5 responses
+          const responses = previousResponses.querySelectorAll('.bg-gray-700');
+          if (responses.length > 5) {
+            responses[responses.length - 1].remove();
+          }
+        }
+        
+        // Initialize Speech Recognition
+        const speechEnabled = initSpeechRecognition();
+        if (!speechEnabled) {
+          voiceQuery.disabled = true;
+          voiceQuery.title = "Speech recognition not supported in your browser";
+          voiceQuery.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        
+        // Event Listeners
+        submitQuery.addEventListener('click', function() {
+          submitFitnessQuery();
+        });
+        
+        fitnessQuery.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            submitFitnessQuery();
+          }
+        });
+        
+        voiceQuery.addEventListener('click', function() {
+          if (!speechEnabled) return;
+          
+          if (isListening) {
+            // Stop listening
+            try {
+              recognition.stop();
+            } catch (error) {
+              console.error("Error stopping recognition:", error);
+            }
+            resetVoiceButton();
+          } else {
+            // Start listening
+            try {
+              recognition.start();
+            } catch (error) {
+              console.error("Error starting recognition:", error);
+              avatarStatus.textContent = "Couldn't start voice recognition. Please try again.";
+            }
+          }
+        });
+        
+        playAvatarAgain.addEventListener('click', function() {
+          if (avatarVideo.src) {
+            avatarVideo.currentTime = 0;
+            avatarVideo.play();
+            avatarStatus.textContent = "Playing response again";
+          }
+        });
+        
+        avatarVideo.addEventListener('ended', function() {
+          avatarStatus.textContent = "Response complete";
+          playAvatarAgain.classList.remove('hidden');
+        });
       });
     </script>
   </body>
