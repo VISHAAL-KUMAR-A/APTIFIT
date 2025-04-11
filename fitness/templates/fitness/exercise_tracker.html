@@ -286,11 +286,14 @@
                 <div class="flex-1">
                   <div class="bg-gray-700 rounded-lg p-3 relative">
                     <div class="absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2 w-0 h-0 border-t-8 border-r-8 border-b-8 border-transparent border-r-gray-700"></div>
-                    <p id="exercise-ai-message" class="text-gray-300">Loading your exercise details...</p>
+                    <p id="exercise-ai-message" class="text-gray-300">Click "Ask AI" button to analyze your exercise plan.</p>
                   </div>
                   <div class="text-xs text-gray-500 mt-1 flex items-center">
                     <i class="fas fa-robot mr-1"></i> AptiFit Trainer
                     <div class="ml-auto flex items-center">
+                      <button id="ask-exercise-ai-btn" class="text-blue-400 hover:text-blue-300 mr-3">
+                        <i class="fas fa-robot mr-1"></i> Ask AI
+                      </button>
                       <button id="exercise-play-again-btn" class="text-blue-400 hover:text-blue-300 hidden mr-3">
                         <i class="fas fa-play-circle mr-1"></i> Play Again
                       </button>
@@ -710,6 +713,7 @@
         // AI Avatar functionality
         const exerciseAvatar = document.getElementById('exercise-ai-avatar');
         const exerciseAiMessage = document.getElementById('exercise-ai-message');
+        const askExerciseAiBtn = document.getElementById('ask-exercise-ai-btn');
         const exercisePlayAgainBtn = document.getElementById('exercise-play-again-btn');
         const exerciseToggleSoundBtn = document.getElementById('exercise-toggle-sound-btn');
         
@@ -819,6 +823,7 @@
           exerciseAiMessage.textContent = "Analyzing your exercise plan...";
           startAvatarAnimation();
           exercisePlayAgainBtn.classList.add('hidden');
+          askExerciseAiBtn.classList.add('hidden');
           
           // If no day provided, get the active day
           if (!dayName) {
@@ -931,9 +936,15 @@
             isSpeaking = false;
             stopAvatarAnimation();
             exercisePlayAgainBtn.classList.remove('hidden');
+            askExerciseAiBtn.classList.add('hidden');
           } else if (isSoundEnabled && !isSpeaking) {
             speakText(exerciseAiMessage.textContent);
           }
+        });
+        
+        // Ask AI button
+        askExerciseAiBtn.addEventListener('click', function() {
+          getExerciseDetails();
         });
         
         // Play again button
@@ -949,23 +960,31 @@
           document.head.appendChild(metaTag);
         }
         
-        // Start on page load if we have an exercise plan
+        // Instead, just make sure the right tab is selected without triggering the AI
         if (document.querySelector('.day-tab')) {
-          // Short delay to ensure DOM is fully loaded
           setTimeout(() => {
-            // Get current day of week and select that tab if it exists
             const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-            const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+            const today = new Date().getDay();
             const todayName = daysOfWeek[today];
             
-            // Try to find tab for current day
             const todayTab = document.querySelector(`.day-tab[data-day="${todayName}"]`);
             if (todayTab) {
-              // Trigger click on today's tab
-              todayTab.click();
-            } else {
-              // Fall back to default behavior (first tab)
-              getExerciseDetails();
+              // Only select the tab, don't trigger AI response
+              const dayId = todayTab.getAttribute('data-day');
+              
+              // Hide all content and remove active class from tabs
+              document.querySelectorAll('.day-content').forEach(content => {
+                content.classList.add('hidden');
+              });
+              document.querySelectorAll('.day-tab').forEach(t => {
+                t.classList.remove('active-tab', 'bg-blue-900', 'text-white');
+                t.classList.add('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
+              });
+              
+              // Show selected content and add active class to today's tab
+              document.getElementById(`day-${dayId}`).classList.remove('hidden');
+              todayTab.classList.add('active-tab', 'bg-blue-900', 'text-white');
+              todayTab.classList.remove('text-gray-300', 'hover:bg-gray-700', 'hover:text-white');
             }
           }, 500);
         }

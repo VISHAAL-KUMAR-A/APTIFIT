@@ -220,11 +220,14 @@
                 <div class="flex-1">
                   <div class="bg-gray-700 rounded-lg p-3 relative">
                     <div class="absolute left-0 top-1/2 transform -translate-x-2 -translate-y-1/2 w-0 h-0 border-t-8 border-r-8 border-b-8 border-transparent border-r-gray-700"></div>
-                    <p id="ai-message" class="text-gray-300">Loading your diet details...</p>
+                    <p id="ai-message" class="text-gray-300">Click "Ask AI" button to analyze your diet plan.</p>
                   </div>
                   <div class="text-xs text-gray-500 mt-1 flex items-center">
                     <i class="fas fa-robot mr-1"></i> AptiFit Assistant
                     <div class="ml-auto flex items-center">
+                      <button id="ask-ai-btn" class="text-blue-400 hover:text-blue-300 mr-3">
+                        <i class="fas fa-robot mr-1"></i> Ask AI
+                      </button>
                       <button id="play-again-btn" class="text-blue-400 hover:text-blue-300 hidden mr-3">
                         <i class="fas fa-play-circle mr-1"></i> Play Again
                       </button>
@@ -559,6 +562,7 @@
       document.addEventListener('DOMContentLoaded', function() {
         const avatar = document.getElementById('ai-avatar');
         const aiMessage = document.getElementById('ai-message');
+        const askAiBtn = document.getElementById('ask-ai-btn');
         const playAgainBtn = document.getElementById('play-again-btn');
         const toggleSoundBtn = document.getElementById('toggle-sound-btn');
         
@@ -640,6 +644,7 @@
         function getDietDetails() {
           startAvatarAnimation();
           playAgainBtn.classList.add('hidden');
+          askAiBtn.classList.add('hidden');
           
           // Show loading message
           aiMessage.textContent = "Analyzing your diet plan for today...";
@@ -706,13 +711,19 @@
             isSpeaking = false;
             stopAvatarAnimation();
             playAgainBtn.classList.remove('hidden');
+            askAiBtn.classList.add('hidden');
           } else if (isSoundEnabled && !isSpeaking) {
             speakText(aiMessage.textContent);
           }
         });
         
-        // Start on page load
-        getDietDetails();
+        // Don't start on page load - wait for button click
+        // getDietDetails();
+        
+        // Ask AI button
+        askAiBtn.addEventListener('click', function() {
+          getDietDetails();
+        });
         
         // Play again button
         playAgainBtn.addEventListener('click', function() {
