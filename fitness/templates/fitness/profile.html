@@ -102,17 +102,8 @@
               {% endif %}
             </div>
             
-            <div class="flex justify-center">
-              <form method="post" action="{% url 'save_profile' %}" enctype="multipart/form-data" class="space-y-2">
-                {% csrf_token %}
-                <div class="flex items-center space-x-3">
-                  <label for="avatar" class="text-sm font-medium text-gray-300 cursor-pointer bg-blue-600 hover:bg-blue-700 py-1 px-3 rounded transition duration-300">
-                    Change Avatar
-                  </label>
-                  <input type="file" id="avatar" name="avatar" class="hidden" accept="image/*" onchange="this.form.submit()">
-                  <span id="file-name" class="text-sm text-gray-400">No file selected</span>
-                </div>
-              </form>
+            <div class="flex justify-center mt-2">
+              <p class="text-sm text-gray-400">To change your profile picture, click "Update Information" below.</p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -247,13 +238,9 @@
 
     <!-- Add JavaScript at the end of the body -->
     <script>
-      // Display selected filename
+      // Display selected filename for new avatar only (in the initial profile setup)
       document.getElementById('new-avatar')?.addEventListener('change', function() {
         document.getElementById('new-file-name').textContent = this.files[0]?.name || 'No file selected';
-      });
-      
-      document.getElementById('avatar')?.addEventListener('change', function() {
-        document.getElementById('file-name').textContent = this.files[0]?.name || 'No file selected';
       });
     </script>
   </body>
