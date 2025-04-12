@@ -26,7 +26,17 @@ import re
 from django.db.models import Q
 from django.conf import settings
 import json
+import requests
+from django.views.decorators.http import require_POST
+import time
+import logging
+import urllib3
+import certifi
 
+# Disable SSL verification warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -1996,3 +2006,201 @@ def get_exercise_description(request):
             })
 
     return JsonResponse({'message': 'Invalid request method'}, status=400)
+
+
+@login_required
+@require_POST
+def process_speech_query(request):
+    """Process a user's speech query with OpenAI GPT-4"""
+    try:
+        data = json.loads(request.body)
+        user_query = data.get('query', '')
+
+        if not user_query:
+            return JsonResponse({'success': False, 'message': 'Empty query'})
+
+        logger.info(f"Processing speech query: {user_query[:30]}...")
+
+        # Get API key from settings or environment
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            return JsonResponse({'success': False, 'message': 'OpenAI API key not configured'})
+
+        # Call OpenAI API (GPT-4)
+        client = openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful fitness assistant. Provide concise, informative responses related to fitness, nutrition, and health. Keep responses under 3 sentences when possible."},
+                {"role": "user", "content": user_query}
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
+
+        ai_response = response.choices[0].message.content.strip()
+        logger.info(f"Got response from OpenAI: {ai_response[:30]}...")
+
+        return JsonResponse({
+            'success': True,
+            'response': ai_response
+        })
+
+    except Exception as e:
+        logger.error(f"Error in process_speech_query: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
+
+
+@login_required
+@require_POST
+def create_talking_avatar(request):
+    """Create a talking avatar using D-ID API with optimized settings"""
+    try:
+        data = json.loads(request.body)
+        message = data.get('message', '')
+
+        if not message:
+            return JsonResponse({'success': False, 'message': 'Empty message'})
+
+        # Limit message length to improve processing speed
+        if len(message) > 250:
+            message = message[:250] + "..."
+
+        logger.info(f"Creating talking avatar for message: {message[:30]}...")
+
+        # Get D-ID credentials from environment variables
+        username = os.environ.get('DID_API_USERNAME', '')
+        password = os.environ.get('DID_API_PASSWORD', '')
+
+        if not username or not password:
+            return JsonResponse({'success': False, 'message': 'D-ID API credentials not configured'})
+
+        # Encode credentials
+        credentials = f"{username}:{password}"
+        encoded_credentials = base64.b64encode(credentials.encode()).decode()
+
+        # D-ID API endpoint
+        url = "https://api.d-id.com/talks"
+
+        # Payload for D-ID - with optimized settings for faster generation
+        payload = {
+            # Use a pre-optimized avatar for faster generation
+            "source_url": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg",
+            "script": {
+                "type": "text",
+                "subtitles": "false",
+                "provider": {
+                    "type": "microsoft",
+                    "voice_id": "Sara"
+                },
+                "input": message,
+                "ssml": "false"
+            },
+            "config": {
+                "fluent": "false",
+                "stitch": True,  # Use stitching for faster generation
+                "result_format": "mp4"  # Use mp4 for better compatibility
+            }
+        }
+
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "authorization": f"Basic {encoded_credentials}"
+        }
+
+        # Call D-ID API with SSL verification disabled
+        response = requests.post(
+            url, json=payload, headers=headers, verify=False)
+        response_data = response.json()
+
+        logger.info(
+            f"D-ID API initial response status: {response.status_code}")
+
+        if response.status_code not in [201, 200]:
+            error_msg = response_data.get('error', 'Unknown error')
+            logger.error(f"D-ID API error: {error_msg}")
+            return JsonResponse({
+                'success': False,
+                'message': f"D-ID API error: {error_msg}"
+            })
+
+        # Get the talk ID
+        talk_id = response_data.get('id')
+        logger.info(f"D-ID talk ID: {talk_id}")
+
+        if not talk_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'No talk ID returned from D-ID'
+            })
+
+        # Poll the result URL to get the video URL
+        result_url = f"https://api.d-id.com/talks/{talk_id}"
+
+        # Try to get the result (with a simple polling approach)
+        max_attempts = 60  # Increased max attempts to allow for longer processing time
+        polling_interval = 2  # seconds
+
+        for attempt in range(max_attempts):
+            logger.info(f"Polling attempt {attempt+1}/{max_attempts}")
+
+            # Get result with SSL verification disabled
+            result_response = requests.get(
+                result_url, headers=headers, verify=False)
+
+            if result_response.status_code != 200:
+                logger.error(
+                    f"D-ID polling error: Status {result_response.status_code}")
+                time.sleep(polling_interval)
+                continue
+
+            result_data = result_response.json()
+            status = result_data.get('status')
+
+            logger.info(f"D-ID talk status: {status}")
+
+            if status == 'done':
+                video_url = result_data.get('result_url')
+                if not video_url:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'No video URL in completed D-ID response'
+                    })
+
+                logger.info(f"D-ID video URL: {video_url}")
+                return JsonResponse({
+                    'success': True,
+                    'video_url': video_url
+                })
+            elif status == 'error':
+                error_msg = result_data.get('error', 'Unknown error')
+                logger.error(f"D-ID processing error: {error_msg}")
+                return JsonResponse({
+                    'success': False,
+                    'message': f"D-ID processing error: {error_msg}"
+                })
+            elif status in ['created', 'started', 'processed', 'processing']:
+                # Still processing, continue polling
+                time.sleep(polling_interval)
+            else:
+                # Unknown status
+                logger.warning(f"Unknown D-ID status: {status}")
+                time.sleep(polling_interval)
+
+        logger.error(
+            "D-ID processing timed out after maximum polling attempts")
+        return JsonResponse({
+            'success': False,
+            'message': 'D-ID processing timed out. The service might be experiencing high demand.'
+        })
+
+    except Exception as e:
+        logger.error(f"Error in create_talking_avatar: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })

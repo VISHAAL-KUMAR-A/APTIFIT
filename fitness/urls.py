@@ -52,4 +52,8 @@ urlpatterns = [
          name='get_diet_description'),
     path('get-exercise-description/', views.get_exercise_description,
          name='get_exercise_description'),
+    path('api/process_speech_query/', views.process_speech_query,
+         name='process_speech_query'),
+    path('api/create_talking_avatar/', views.create_talking_avatar,
+         name='create_talking_avatar'),
 ]
