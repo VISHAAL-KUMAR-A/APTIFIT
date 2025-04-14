@@ -219,10 +219,14 @@ def index(request):
 
 @login_required
 def profile(request):
+    # Get user profile data
     user_profile = request.user.userprofile
 
-    # Check which profile fields are missing
+    # Check if user has entered basic fitness data
+    user_has_data = bool(
+        user_profile.height and user_profile.weight and user_profile.sex and user_profile.age)
     missing_fields = []
+
     if not user_profile.height:
         missing_fields.append("height")
     if not user_profile.weight:
@@ -232,41 +236,31 @@ def profile(request):
     if not user_profile.age:
         missing_fields.append("age")
 
-    user_has_data = not missing_fields
-
-    # Create a message about missing fields if any
+    missing_fields_message = None
     if missing_fields:
-        missing_fields_message = "Your profile is incomplete. Please add your " + \
-            ", ".join(missing_fields) + "."
-    else:
-        missing_fields_message = None
+        missing_fields_message = f"Please complete your profile by filling in: {', '.join(missing_fields)}"
 
     context = {
+        'user': request.user,
         'user_has_data': user_has_data,
-        'notification_preference': user_profile.notification_preference,
-        'missing_fields_message': missing_fields_message,
         'missing_fields': missing_fields,
+        'missing_fields_message': missing_fields_message,
+        'height': user_profile.height,
+        'weight': user_profile.weight,
+        'sex': user_profile.sex,
+        'age': user_profile.age,
+        'bmi': user_profile.bmi,
+        'bmi_category': user_profile.bmi_category,
+        'body_fat': user_profile.body_fat,
+        'body_fat_category': user_profile.body_fat_category,
+        'notification_preference': user_profile.notification_preference,
+        # Add new fields to context
+        'country': user_profile.country,
+        'state': user_profile.state,
+        'language': user_profile.language,
+        'ethnic_group': user_profile.ethnic_group,
+        'diet_preference': user_profile.diet_preference,
     }
-
-    if user_has_data:
-        context.update({
-            'height': user_profile.height,
-            'weight': user_profile.weight,
-            'sex': user_profile.sex,
-            'age': user_profile.age,
-            'bmi': user_profile.bmi,
-            'bmi_category': user_profile.bmi_category,
-            'body_fat': user_profile.body_fat,
-            'body_fat_category': user_profile.body_fat_category,
-        })
-    else:
-        # Include the existing values in the context so they are preserved in the form
-        context.update({
-            'height': user_profile.height,
-            'weight': user_profile.weight,
-            'sex': user_profile.sex,
-            'age': user_profile.age,
-        })
 
     return render(request, 'fitness/profile.html', context)
 
@@ -732,51 +726,100 @@ def extract_meal_info(text, meal_type):
 @login_required
 def save_profile(request):
     if request.method == 'POST':
-        # Get the user profile
-        profile = request.user.userprofile
+        # Get data from form
+        height = request.POST.get('height')
+        weight = request.POST.get('weight')
+        sex = request.POST.get('sex')
+        age = request.POST.get('age')
 
-        # Process avatar if provided
-        if 'avatar' in request.FILES:
-            profile.avatar = request.FILES['avatar']
+        # Get new fields from form
+        country = request.POST.get('country')
+        state = request.POST.get('state')
+        language = request.POST.get('language')
+        ethnic_group = request.POST.get('ethnic_group')
+        diet_preference = request.POST.get('diet_preference')
 
-        # Process other fields
-        profile.height = request.POST.get('height')
-        profile.weight = request.POST.get('weight')
-        profile.sex = request.POST.get('sex')
-        profile.age = request.POST.get('age')
-        profile.save()
+        # Handle avatar upload
+        avatar = request.FILES.get('avatar')
 
-        add_notification(request, "Profile saved successfully!", "success")
+        # Update user profile
+        user_profile = request.user.userprofile
+        user_profile.height = height
+        user_profile.weight = weight
+        user_profile.sex = sex
+        user_profile.age = age
+
+        # Update new fields
+        user_profile.country = country
+        user_profile.state = state
+        user_profile.language = language
+        user_profile.ethnic_group = ethnic_group
+        user_profile.diet_preference = diet_preference
+
+        if avatar:
+            user_profile.avatar = avatar
+
+        user_profile.save()
+
+        messages.success(request, "Profile information saved successfully!")
         return redirect('profile')
+
     return redirect('profile')
 
 
 @login_required
 def update_profile(request):
     if request.method == 'POST':
-        # Get the user profile
-        profile = request.user.userprofile
+        # Get data from form
+        height = request.POST.get('height')
+        weight = request.POST.get('weight')
+        sex = request.POST.get('sex')
+        age = request.POST.get('age')
 
-        # Process avatar if provided
-        if 'avatar' in request.FILES:
-            profile.avatar = request.FILES['avatar']
+        # Get new fields from form
+        country = request.POST.get('country')
+        state = request.POST.get('state')
+        language = request.POST.get('language')
+        ethnic_group = request.POST.get('ethnic_group')
+        diet_preference = request.POST.get('diet_preference')
 
-        # Process other fields
-        profile.height = request.POST.get('height')
-        profile.weight = request.POST.get('weight')
-        profile.sex = request.POST.get('sex')
-        profile.age = request.POST.get('age')
-        profile.save()
+        # Handle avatar upload
+        avatar = request.FILES.get('avatar')
 
-        add_notification(request, "Profile updated successfully!", "success")
+        # Update user profile
+        user_profile = request.user.userprofile
+        user_profile.height = height
+        user_profile.weight = weight
+        user_profile.sex = sex
+        user_profile.age = age
+
+        # Update new fields
+        user_profile.country = country
+        user_profile.state = state
+        user_profile.language = language
+        user_profile.ethnic_group = ethnic_group
+        user_profile.diet_preference = diet_preference
+
+        if avatar:
+            user_profile.avatar = avatar
+
+        user_profile.save()
+
+        messages.success(request, "Profile updated successfully!")
         return redirect('profile')
 
-    # For GET requests, display the form with current values
+    # Display the form with current values
+    user_profile = request.user.userprofile
     context = {
-        'height': request.user.userprofile.height,
-        'weight': request.user.userprofile.weight,
-        'sex': request.user.userprofile.sex,
-        'age': request.user.userprofile.age,
+        'height': user_profile.height,
+        'weight': user_profile.weight,
+        'sex': user_profile.sex,
+        'age': user_profile.age,
+        'country': user_profile.country,
+        'state': user_profile.state,
+        'language': user_profile.language,
+        'ethnic_group': user_profile.ethnic_group,
+        'diet_preference': user_profile.diet_preference,
     }
     return render(request, 'fitness/update_profile.html', context)
 

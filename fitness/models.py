@@ -13,6 +13,23 @@ class UserProfile(models.Model):
         ('none', 'None'),
     ]
 
+    DIET_CHOICES = [
+        ('vegetarian', 'Vegetarian'),
+        ('non-vegetarian', 'Non-Vegetarian'),
+    ]
+
+    ETHNIC_GROUP_CHOICES = [
+        ('asian', 'Asian'),
+        ('black', 'Black/African'),
+        ('hispanic', 'Hispanic/Latino'),
+        ('middle_eastern', 'Middle Eastern'),
+        ('white', 'White/Caucasian'),
+        ('pacific_islander', 'Pacific Islander'),
+        ('native_american', 'Native American'),
+        ('mixed', 'Mixed Ethnicity'),
+        ('other', 'Other'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_password_change = models.DateTimeField(auto_now=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -23,6 +40,23 @@ class UserProfile(models.Model):
     weight = models.FloatField(blank=True, null=True)  # in kg
     sex = models.CharField(max_length=10, blank=True, null=True)
     age = models.IntegerField(blank=True, null=True)  # add age field
+
+    # New cultural and dietary preference fields
+    country = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    language = models.CharField(max_length=100, blank=True, null=True)
+    ethnic_group = models.CharField(
+        max_length=20,
+        choices=ETHNIC_GROUP_CHOICES,
+        blank=True,
+        null=True
+    )
+    diet_preference = models.CharField(
+        max_length=20,
+        choices=DIET_CHOICES,
+        blank=True,
+        null=True
+    )
 
     # Notification preferences
     notification_preference = models.CharField(

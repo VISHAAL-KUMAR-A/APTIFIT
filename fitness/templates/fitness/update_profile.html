@@ -143,6 +143,65 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Add new fields for country, state, language, ethnic group and diet preference -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>
+                  <label for="country" class="block text-sm font-medium text-gray-300">Country</label>
+                  <input type="text" id="country" name="country" 
+                         value="{{ country|default:'' }}"
+                         class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label for="state" class="block text-sm font-medium text-gray-300">State/Province</label>
+                  <input type="text" id="state" name="state" 
+                         value="{{ state|default:'' }}"
+                         class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>
+                  <label for="language" class="block text-sm font-medium text-gray-300">Preferred Language</label>
+                  <input type="text" id="language" name="language" 
+                         value="{{ language|default:'' }}"
+                         class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label for="ethnic_group" class="block text-sm font-medium text-gray-300">Ethnic Group</label>
+                  <select id="ethnic_group" name="ethnic_group" 
+                        class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500">
+                    <option value="" {% if not ethnic_group %}selected{% endif %}>Select Ethnic Group</option>
+                    <option value="asian" {% if ethnic_group == 'asian' %}selected{% endif %}>Asian</option>
+                    <option value="black" {% if ethnic_group == 'black' %}selected{% endif %}>Black/African</option>
+                    <option value="hispanic" {% if ethnic_group == 'hispanic' %}selected{% endif %}>Hispanic/Latino</option>
+                    <option value="middle_eastern" {% if ethnic_group == 'middle_eastern' %}selected{% endif %}>Middle Eastern</option>
+                    <option value="white" {% if ethnic_group == 'white' %}selected{% endif %}>White/Caucasian</option>
+                    <option value="pacific_islander" {% if ethnic_group == 'pacific_islander' %}selected{% endif %}>Pacific Islander</option>
+                    <option value="native_american" {% if ethnic_group == 'native_american' %}selected{% endif %}>Native American</option>
+                    <option value="mixed" {% if ethnic_group == 'mixed' %}selected{% endif %}>Mixed Ethnicity</option>
+                    <option value="other" {% if ethnic_group == 'other' %}selected{% endif %}>Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-300">Diet Preference</label>
+                <div class="mt-2 flex items-center space-x-6">
+                  <div class="flex items-center">
+                    <input id="vegetarian" name="diet_preference" type="radio" value="vegetarian"
+                           {% if diet_preference == 'vegetarian' %}checked{% endif %}
+                           class="h-4 w-4 bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                    <label for="vegetarian" class="ml-2 block text-sm text-gray-300">Vegetarian</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input id="non-vegetarian" name="diet_preference" type="radio" value="non-vegetarian"
+                           {% if diet_preference == 'non-vegetarian' %}checked{% endif %}
+                           class="h-4 w-4 bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                    <label for="non-vegetarian" class="ml-2 block text-sm text-gray-300">Non-Vegetarian</label>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div class="flex space-x-4">
