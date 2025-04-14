@@ -517,6 +517,17 @@ def chatbot(request):
                     # Get daily calorie needs
                     daily_calories = user_profile.daily_calorie_needs or "Not calculated"
 
+                    # Add location, ethnic group, and dietary preference data
+                    location_data = {}
+                    if user_profile.country:
+                        location_data["country"] = user_profile.country
+                    if user_profile.state:
+                        location_data["state"] = user_profile.state
+
+                    diet_preference = user_profile.diet_preference or "not specified"
+                    ethnic_group = user_profile.ethnic_group or "not specified"
+
+                    # Build the enhanced profile data with cultural/dietary info
                     profile_data = f"""
                     User Profile Data:
                     - Age: {user_profile.age} years
@@ -526,10 +537,42 @@ def chatbot(request):
                     - BMI: {user_profile.bmi} ({user_profile.bmi_category})
                     - Body Fat: {user_profile.body_fat}% ({user_profile.body_fat_category})
                     - Daily Calorie Needs: {daily_calories} calories
+                    - Country: {location_data.get('country', 'Not specified')}
+                    - State/Region: {location_data.get('state', 'Not specified')}
+                    - Ethnic Group: {ethnic_group}
+                    - Diet Preference: {diet_preference}
                     
                     Based on this profile data, create a weekly meal plan (Monday through Sunday) 
                     with different meals for each day that matches the user's daily calorie needs. The diet plan should be
-                    nutritionally balanced and appropriate for their age, sex, and body composition.
+                    nutritionally balanced and appropriate for their age, sex, body composition, and dietary preferences.
+                    
+                    IMPORTANT DIETARY INSTRUCTIONS:
+                    """
+
+                    # Add detailed dietary instructions based on preferences
+                    if diet_preference == 'vegetarian':
+                        profile_data += """
+                    - The diet plan must be strictly VEGETARIAN with NO meat, fish, or seafood.
+                    - Include a variety of plant-based proteins like legumes, tofu, tempeh, and dairy products.
+                    """
+                    elif diet_preference == 'non-vegetarian':
+                        profile_data += """
+                    - Include a balanced mix of animal and plant proteins.
+                    - You may include meat, fish, and seafood in the meal plan.
+                    """
+                    else:
+                        profile_data += """
+                    - Create a balanced diet with a mix of protein sources.
+                    - Since no specific diet preference is specified, include a variety of options.
+                    """
+
+                    # Add cultural/ethnic-specific instructions
+                    profile_data += f"""
+                    - Incorporate foods and dishes that are culturally appropriate for someone of {ethnic_group} ethnic background.
+                    - Include dishes and ingredients that would be commonly available in {location_data.get('country', 'their country')}
+                      and specifically in {location_data.get('state', 'their region')} if possible.
+                    - For weekend days (Saturday and Sunday), include more elaborate or special dishes 
+                      that people might enjoy during leisure time, while staying within calorie goals.
                     
                     Please format each day exactly like this (with the headers and colons):
                     
@@ -1166,7 +1209,7 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
         days = ['monday', 'tuesday', 'wednesday',
                 'thursday', 'friday', 'saturday', 'sunday']
         current_day_index = days.index(current_day)
-        future_days = days[current_day_index+1:] + days[:current_dayindex]
+        future_days = days[current_day_index+1:] + days[:current_day_index]
 
         # Get the user's diet plan
         diet_plan = DietPlan.objects.get(user=user)
@@ -1208,6 +1251,13 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
                 diet_plan=diet_plan,
                 day_of_week=day
             )
+
+            # Check if it's a weekend day (Saturday or Sunday)
+            if day in ['saturday', 'sunday']:
+                # Use the specialized weekend diet plan function
+                create_weekend_diet_plan(
+                    user, day, future_plan, current_daily_plan, current_day)
+                continue
 
             # Prepare message for OpenAI
             calorie_instruction = ""
@@ -1292,6 +1342,180 @@ def update_future_diet_plans(user, current_daily_plan, current_day):
     except Exception as e:
         # Log any errors but don't interrupt the user experience
         print(f"Error in update_future_diet_plans: {str(e)}")
+
+
+def create_weekend_diet_plan(user, day, daily_plan, current_daily_plan, current_day):
+    """
+    Creates a specialized weekend diet plan based on user's location, ethnic group, and dietary preferences
+    """
+    try:
+        # Get user profile data
+        user_profile = user.userprofile
+
+        # Check if profile has required data
+        if not all([user_profile.height, user_profile.weight, user_profile.sex, user_profile.age]):
+            # Can't create personalized plan without basic info
+            return
+
+        # Get specific profile data for cultural/dietary requirements
+        daily_calories = user_profile.daily_calorie_needs
+        location_data = {}
+
+        # Add location data if available
+        if user_profile.country:
+            location_data["country"] = user_profile.country
+        if user_profile.state:
+            location_data["state"] = user_profile.state
+
+        # Get dietary preference
+        diet_preference = user_profile.diet_preference or "not specified"
+
+        # Get ethnic group
+        ethnic_group = user_profile.ethnic_group or "not specified"
+
+        # Build the complete profile data
+        profile_data = f"""
+        User Profile Data:
+        - Age: {user_profile.age} years
+        - Height: {user_profile.height} cm
+        - Weight: {user_profile.weight} kg
+        - Sex: {user_profile.sex}
+        - BMI: {user_profile.bmi} ({user_profile.bmi_category})
+        - Body Fat: {user_profile.body_fat}% ({user_profile.body_fat_category})
+        - Daily Calorie Needs: {daily_calories} calories
+        - Country: {location_data.get('country', 'Not specified')}
+        - State/Region: {location_data.get('state', 'Not specified')}
+        - Ethnic Group: {ethnic_group}
+        - Diet Preference: {diet_preference}
+        """
+
+        # Get current tracked diet
+        current_diet = f"""
+        Current Tracked Diet ({current_day.capitalize()}):
+        - Breakfast: {current_daily_plan.breakfast or 'None'} ({current_daily_plan.breakfast_calories or 0} calories)
+        - Lunch: {current_daily_plan.lunch or 'None'} ({current_daily_plan.lunch_calories or 0} calories)
+        - Dinner: {current_daily_plan.dinner or 'None'} ({current_daily_plan.dinner_calories or 0} calories)
+        - Snacks: {current_daily_plan.snacks or 'None'} ({current_daily_plan.snacks_calories or 0} calories)
+        """
+
+        # Prepare message for OpenAI
+        calorie_instruction = ""
+        if daily_calories:
+            calorie_instruction = f"The total calories for the day should be approximately {daily_calories} calories."
+
+        # Create tailored prompt based on user's cultural and dietary preferences
+        dietary_instructions = """
+        IMPORTANT DIETARY INSTRUCTIONS:
+        """
+
+        # Add instructions based on dietary preference
+        if diet_preference == 'vegetarian':
+            dietary_instructions += """
+        - The diet plan must be strictly VEGETARIAN with NO meat, fish, or seafood.
+        - Include a variety of plant-based proteins like legumes, tofu, tempeh, and dairy products.
+        """
+        elif diet_preference == 'non-vegetarian':
+            dietary_instructions += """
+        - Include a balanced mix of animal and plant proteins.
+        - You may include meat, fish, and seafood in the meal plan.
+        """
+        else:
+            dietary_instructions += """
+        - Create a balanced diet with a mix of protein sources.
+        - Since no specific diet preference is specified, include a variety of options.
+        """
+
+        # Add cultural/ethnic-specific instructions
+        dietary_instructions += f"""
+        - Incorporate foods and dishes that are culturally appropriate for someone of {ethnic_group} ethnic background.
+        - Include dishes and ingredients that would be commonly available in {location_data.get('country', 'their country')}
+          and specifically in {location_data.get('state', 'their region')} if possible.
+        - For weekend meals, include more elaborate or special dishes that people might enjoy during leisure time.
+        - {day.capitalize()} meals should feel special compared to weekday meals, while staying within calorie goals.
+        """
+
+        prompt = f"""
+        Create a specialized {day.capitalize()} diet plan tailored to the user's profile, location, and cultural background.
+        
+        {profile_data}
+        
+        {current_diet}
+        
+        {dietary_instructions}
+        
+        Create a comprehensive and culturally appropriate meal plan for {day.capitalize()} that aligns with the user's:
+        1. Calorie needs ({calorie_instruction})
+        2. Dietary preference (vegetarian/non-vegetarian as specified)
+        3. Cultural and ethnic background
+        4. Geographic location (using locally available ingredients)
+        
+        Since this is a weekend day, make the meals slightly more special, flavorful and elaborate than weekday meals,
+        while ensuring they remain healthy and within calorie goals.
+        
+        The output MUST be in this exact JSON format with no extra text:
+        {{
+            "breakfast": "detailed breakfast description",
+            "breakfast_calories": calories_as_integer,
+            "lunch": "detailed lunch description",
+            "lunch_calories": calories_as_integer,
+            "dinner": "detailed dinner description",
+            "dinner_calories": calories_as_integer,
+            "snacks": "detailed snacks description",
+            "snacks_calories": calories_as_integer
+        }}
+        """
+
+        # Initialize the OpenAI client
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        # Generate new weekend meal plan
+        response = client.chat.completions.create(
+            model="gpt-4o",  # Using GPT-4o as specified
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=3000,
+        )
+
+        # Extract JSON from response
+        ai_response = response.choices[0].message.content
+
+        # Parse JSON from the response
+        import json
+        import re
+
+        # Look for JSON in the response
+        json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+        if json_match:
+            try:
+                meal_plan = json.loads(json_match.group(0))
+
+                # Update the weekend day's plan
+                daily_plan.breakfast = meal_plan.get(
+                    'breakfast', daily_plan.breakfast)
+                daily_plan.breakfast_calories = meal_plan.get(
+                    'breakfast_calories', daily_plan.breakfast_calories)
+                daily_plan.lunch = meal_plan.get('lunch', daily_plan.lunch)
+                daily_plan.lunch_calories = meal_plan.get(
+                    'lunch_calories', daily_plan.lunch_calories)
+                daily_plan.dinner = meal_plan.get('dinner', daily_plan.dinner)
+                daily_plan.dinner_calories = meal_plan.get(
+                    'dinner_calories', daily_plan.dinner_calories)
+                daily_plan.snacks = meal_plan.get('snacks', daily_plan.snacks)
+                daily_plan.snacks_calories = meal_plan.get(
+                    'snacks_calories', daily_plan.snacks_calories)
+                daily_plan.save()
+                return True
+            except json.JSONDecodeError:
+                print(f"JSON decode error in weekend diet plan for {day}")
+                return False
+        else:
+            print(f"No JSON found in response for {day} diet plan")
+            return False
+
+    except Exception as e:
+        # Log any errors but don't interrupt the user experience
+        print(f"Error in create_weekend_diet_plan for {day}: {str(e)}")
+        return False
 
 
 @login_required
@@ -1977,7 +2201,7 @@ def get_diet_description(request):
 
             client = openai.OpenAI(api_key=api_key)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o",  # Changed from gpt-3.5-turbo to gpt-4o
                 messages=[
                     {"role": "system", "content": "You are a helpful fitness assistant that gives brief, friendly diet descriptions optimized for text-to-speech."},
                     {"role": "user", "content": prompt}
@@ -2030,7 +2254,7 @@ def get_exercise_description(request):
 
             client = openai.OpenAI(api_key=api_key)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o",  # Changed from gpt-3.5-turbo to gpt-4o
                 messages=[
                     {"role": "system", "content": "You are a helpful fitness trainer that gives brief, motivational exercise descriptions optimized for text-to-speech."},
                     {"role": "user", "content": prompt}
