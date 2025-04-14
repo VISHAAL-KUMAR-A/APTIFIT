@@ -1,9 +1,11 @@
+import os
 import pyttsx3
 import speech_recognition as sr
 from openai import OpenAI
 
-# Initialize OpenAI client with API key
-client = OpenAI(api_key="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")
+# Load API key from environment variable
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 
 # Initialize Text-to-Speech engine
 engine = pyttsx3.init('sapi5')
