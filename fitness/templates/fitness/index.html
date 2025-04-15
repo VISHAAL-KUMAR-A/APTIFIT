@@ -1067,13 +1067,24 @@
           // Add user message to history
           addMessageToHistory(userText, 'user');
           
-          // Show loading indicator with message about expected wait time
+          // Show loading indicator
           setAvatarState('loading');
-          const loadingMessage = 'Processing your question...';
-          addMessageToHistory(loadingMessage, 'ai');
+          
+          // Don't add an AI text response to the conversation history
+          // Instead, just show "Processing your request..." while waiting
+          const processingMessage = document.createElement('div');
+          processingMessage.className = 'p-2 rounded-lg bg-gray-800 mr-12';
+          processingMessage.innerHTML = `
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mr-2"><i class="fas fa-robot text-purple-400"></i></div>
+              <div class="text-white">Processing your request... The avatar will respond shortly.</div>
+            </div>
+          `;
+          conversationHistory.appendChild(processingMessage);
+          conversationHistory.scrollTop = conversationHistory.scrollHeight;
           
           try {
-            // First, get the GPT response since it's usually faster
+            // First, get the GPT response with increased token length
             debugLog('Sending request to process_speech_query');
             const gptResponse = await fetch('{% url "process_speech_query" %}', {
               method: 'POST',
@@ -1091,12 +1102,11 @@
               throw new Error(gptData.message || 'Error processing your request');
             }
             
-            // Remove loading message and add GPT response to history
-            conversationHistory.removeChild(conversationHistory.lastChild);
-            addMessageToHistory(gptData.response, 'ai');
+            // Remove the processing message
+            conversationHistory.removeChild(processingMessage);
             
-            // Update loading message to be more specific about D-ID
-            document.querySelector('#avatar-loading p').textContent = 'Generating talking avatar (20-30 seconds)...';
+            // Update loading message
+            document.querySelector('#avatar-loading p').textContent = 'Creating talking avatar (20-30 seconds)...';
             
             debugLog('Sending request to create_talking_avatar');
             // Create D-ID talking avatar with the GPT response
@@ -1116,40 +1126,34 @@
               throw new Error(didData.message || 'Error creating talking avatar');
             }
             
-            // Configure the video element for avatar-like appearance
-            const avatarVideo = document.getElementById('avatar-video');
-            
-            // Remove default video controls
-            avatarVideo.controls = false;
-            
-            // Style the video for avatar appearance
-            avatarVideo.className = 'w-full h-full object-cover rounded-full';
-            avatarVideo.style.background = 'transparent';
-            
-            // Additional styles for the container
-            const videoContainer = document.getElementById('avatar-video-container');
-            videoContainer.className = 'w-64 h-64 rounded-full overflow-hidden mx-auto bg-gradient-to-r from-blue-500 to-purple-600';
-            videoContainer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
-            
             // Pre-load the video to ensure it's fully loaded before displaying
             debugLog('Preloading video: ' + didData.video_url);
             
             // Set the video source
+            const avatarVideo = document.getElementById('avatar-video');
             avatarVideo.src = didData.video_url;
+            avatarVideo.controls = false;
             avatarVideo.muted = false;
-            setAvatarState('video');
             
-            // Custom play handling to prevent user control
-            avatarVideo.onpause = function() {
-              // Only auto-resume if video isn't ended and wasn't paused by user interaction
-              if (!avatarVideo.ended) {
-                setTimeout(() => {
-                  avatarVideo.play().catch(e => {
-                    console.log('Auto-resume prevented by browser');
-                  });
-                }, 100);
-              }
-            };
+            // Style the video container for avatar appearance
+            const videoContainer = document.getElementById('avatar-video-container');
+            videoContainer.style.borderRadius = '8px';
+            videoContainer.style.overflow = 'hidden';
+            videoContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.2)';
+            videoContainer.style.background = 'transparent';
+            videoContainer.style.width = '100%';
+            videoContainer.style.maxWidth = '360px';
+            videoContainer.style.margin = '0 auto';
+            videoContainer.style.aspectRatio = '4/3';
+            videoContainer.style.border = '1px solid rgba(209, 213, 219, 0.2)';
+            
+            // Style the video itself
+            avatarVideo.style.width = '100%';
+            avatarVideo.style.height = '100%';
+            avatarVideo.style.backgroundColor = 'transparent';
+            avatarVideo.style.objectFit = 'contain';
+            
+            setAvatarState('video');
             
             // Play the video
             const playPromise = avatarVideo.play();
@@ -1157,20 +1161,15 @@
               playPromise.catch(error => {
                 debugLog('Auto-play prevented: ' + error.message);
                 
-                // Instead of showing play message with button, try to play after user interaction
-                document.addEventListener('click', function playOnFirstClick() {
-                  avatarVideo.play().catch(e => console.log('Cannot play on click:', e));
-                  document.removeEventListener('click', playOnFirstClick);
-                }, { once: true });
-                
+                // Create a play button if autoplay is blocked
                 const playMessage = document.createElement('div');
-                playMessage.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full';
-                playMessage.innerHTML = '<div class="text-white text-center p-4"><i class="fas fa-play-circle text-4xl mb-2"></i><p>Click to activate</p></div>';
+                playMessage.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 cursor-pointer';
+                playMessage.innerHTML = '<div class="text-white text-center p-4"><i class="fas fa-play-circle text-4xl mb-2"></i><p>Click to play response</p></div>';
                 videoContainer.appendChild(playMessage);
                 
-                // Remove the message when the video is clicked
+                // Remove the message when clicked and play the video
                 playMessage.addEventListener('click', function() {
-                  avatarVideo.play();
+                  avatarVideo.play().catch(e => debugLog('Cannot play on click: ' + e.message));
                   playMessage.remove();
                 });
               });
@@ -1178,9 +1177,11 @@
             
           } catch (error) {
             debugLog('Error: ' + error.message);
-            // Remove loading message
-            if (conversationHistory.lastChild && conversationHistory.lastChild.textContent.includes('Processing')) {
-              conversationHistory.removeChild(conversationHistory.lastChild);
+            
+            // Remove any processing message if it exists
+            const processingMsg = conversationHistory.querySelector('div:last-child');
+            if (processingMsg && processingMsg.textContent.includes('Processing')) {
+              conversationHistory.removeChild(processingMsg);
             }
             
             setAvatarState('placeholder');
@@ -1211,6 +1212,42 @@
         // Initialize
         setAvatarState('placeholder');
         debugLog('AI Avatar initialized');
+      });
+
+      // Add this function to initialize the avatar container properly
+      function initializeAvatarContainer() {
+        // Style the video container
+        const videoContainer = document.getElementById('avatar-video-container');
+        if (videoContainer) {
+          videoContainer.style.borderRadius = '8px';
+          videoContainer.style.overflow = 'hidden';
+          videoContainer.style.width = '100%';
+          videoContainer.style.maxWidth = '360px';
+          videoContainer.style.margin = '0 auto';
+          videoContainer.style.aspectRatio = '4/3';
+          videoContainer.style.background = 'transparent';
+          videoContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.2)';
+        }
+        
+        // Update placeholder to show AI avatar image with transparent background
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        if (avatarPlaceholder) {
+          avatarPlaceholder.innerHTML = `
+            <div class="w-full h-full flex flex-col items-center justify-center">
+              <div class="w-3/4 h-3/4 rounded-lg overflow-hidden">
+                <img src="https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg" 
+                     alt="AI Assistant" class="w-full h-full object-contain">
+              </div>
+              <p class="text-gray-300 mt-3">Ask a question to activate the AI assistant</p>
+            </div>
+          `;
+        }
+      }
+
+      // Call this function when the page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        initializeAvatarContainer();
+        // ... rest of your existing DOMContentLoaded code ...
       });
     </script>
   </body>

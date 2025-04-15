@@ -2278,7 +2278,7 @@ def get_exercise_description(request):
 @login_required
 @require_POST
 def process_speech_query(request):
-    """Process a user's speech query with OpenAI GPT-4"""
+    """Process a user's speech query with OpenAI GPT-4 for longer, more detailed responses"""
     try:
         data = json.loads(request.body)
         user_query = data.get('query', '')
@@ -2293,20 +2293,21 @@ def process_speech_query(request):
         if not api_key:
             return JsonResponse({'success': False, 'message': 'OpenAI API key not configured'})
 
-        # Call OpenAI API (GPT-4)
+        # Call OpenAI API (GPT-4) with increased token count and modified prompt
         client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful fitness assistant. Provide concise, informative responses related to fitness, nutrition, and health. Keep responses under 3 sentences when possible."},
+                {"role": "system",
+                    "content": "You are a helpful fitness assistant speaking through a talking avatar. Provide detailed, informative responses related to fitness, nutrition, and health. Use natural language with proper pauses (commas, periods) since your response will be spoken aloud. Always include at least 3-4 sentences for a comprehensive answer."},
                 {"role": "user", "content": user_query}
             ],
-            max_tokens=150,
+            max_tokens=500,  # Increased from 150 to 500 for longer responses
             temperature=0.7
         )
 
         ai_response = response.choices[0].message.content.strip()
-        logger.info(f"Got response from OpenAI: {ai_response[:30]}...")
+        logger.info(f"Got response from OpenAI: {ai_response[:50]}...")
 
         return JsonResponse({
             'success': True,
