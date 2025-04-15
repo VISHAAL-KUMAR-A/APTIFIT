@@ -532,7 +532,7 @@
             <div id="avatar-loading" class="text-center hidden">
               <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-2"></div>
               <p class="text-gray-400">Generating avatar response...</p>
-              <p class="text-xs text-gray-500 mt-2">This may take 20-30 seconds...</p>
+              <p class="text-xs text-gray-500 mt-2">This may take 30 seconds...</p>
             </div>
             <div id="avatar-placeholder" class="text-center">
               <i class="fas fa-robot text-5xl text-gray-600 mb-2"></i>
@@ -566,12 +566,12 @@
             </div>
             
             <!-- Debug info panel -->
-            <div id="debug-panel" class="bg-gray-900 p-2 rounded-lg text-xs text-gray-400">
+            <div id="debug-panel" class="bg-gray-900 p-2 rounded-lg text-xs text-gray-400 hidden">
               <p id="debug-info">Debug information will appear here</p>
             </div>
             
-            <!-- Conversation history -->
-            <div id="conversation-history" class="mt-4 max-h-60 overflow-y-auto bg-gray-700 rounded-lg p-2 space-y-3">
+            <!-- Conversation history - HIDDEN -->
+            <div id="conversation-history" class="hidden mt-4 max-h-60 overflow-y-auto bg-gray-700 rounded-lg p-2 space-y-3">
               <div class="text-gray-400 text-center italic">
                 Your conversation will appear here
               </div>
@@ -1015,6 +1015,11 @@
         
         // Function to add messages to the conversation history
         function addMessageToHistory(message, sender) {
+          // We'll still track conversation state internally but not display it
+          // This keeps the logic intact without showing the conversation to the user
+          
+          // The conversation history div is now hidden with the "hidden" class
+          
           // Clear initial message if it's the first real message
           if (conversationHistory.querySelector('.italic')) {
             conversationHistory.innerHTML = '';
@@ -1042,6 +1047,7 @@
           messageElement.appendChild(contentWrapper);
           
           conversationHistory.appendChild(messageElement);
+          // We still update the scroll position in case the conversation history is ever shown
           conversationHistory.scrollTop = conversationHistory.scrollHeight;
         }
         
@@ -1064,27 +1070,17 @@
         async function processUserQuery(userText) {
           debugLog('Processing query: ' + userText);
           
-          // Add user message to history
+          // Add user message to hidden history
           addMessageToHistory(userText, 'user');
           
           // Show loading indicator
           setAvatarState('loading');
           
-          // Don't add an AI text response to the conversation history
-          // Instead, just show "Processing your request..." while waiting
-          const processingMessage = document.createElement('div');
-          processingMessage.className = 'p-2 rounded-lg bg-gray-800 mr-12';
-          processingMessage.innerHTML = `
-            <div class="flex items-start">
-              <div class="flex-shrink-0 mr-2"><i class="fas fa-robot text-purple-400"></i></div>
-              <div class="text-white">Processing your request... The avatar will respond shortly.</div>
-            </div>
-          `;
-          conversationHistory.appendChild(processingMessage);
-          conversationHistory.scrollTop = conversationHistory.scrollHeight;
+          // Since the conversation is hidden, we don't need to add processing messages
+          // but we'll keep the structure for code consistency
           
           try {
-            // First, get the GPT response with increased token length
+            // First, get the GPT response - no token length limit since we support up to 45 min
             debugLog('Sending request to process_speech_query');
             const gptResponse = await fetch('{% url "process_speech_query" %}', {
               method: 'POST',
@@ -1102,14 +1098,11 @@
               throw new Error(gptData.message || 'Error processing your request');
             }
             
-            // Remove the processing message
-            conversationHistory.removeChild(processingMessage);
-            
-            // Update loading message
+            // Update loading message to indicate D-ID processing
             document.querySelector('#avatar-loading p').textContent = 'Creating talking avatar (20-30 seconds)...';
             
             debugLog('Sending request to create_talking_avatar');
-            // Create D-ID talking avatar with the GPT response
+            // Create D-ID talking avatar with the complete GPT response - we support up to 45 min with launch version
             const didResponse = await fetch('{% url "create_talking_avatar" %}', {
               method: 'POST',
               headers: {
@@ -1139,14 +1132,25 @@
           } catch (error) {
             debugLog('Error: ' + error.message);
             
-            // Remove any processing message if it exists
-            const processingMsg = conversationHistory.querySelector('div:last-child');
-            if (processingMsg && processingMsg.textContent.includes('Processing')) {
-              conversationHistory.removeChild(processingMsg);
-            }
-            
             setAvatarState('placeholder');
+            // Still track errors in the hidden conversation history
             addMessageToHistory('Sorry, there was an error: ' + error.message, 'ai');
+            
+            // But also show an error message to the user visually
+            // We can use alerts or a floating notification since conversation is hidden
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'p-3 mb-4 bg-red-800 text-white rounded-md text-center';
+            errorContainer.textContent = 'Error: ' + error.message;
+            
+            const videoContainer = document.getElementById('avatar-video-container');
+            videoContainer.parentNode.insertBefore(errorContainer, videoContainer.nextSibling);
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+              if (errorContainer.parentNode) {
+                errorContainer.parentNode.removeChild(errorContainer);
+              }
+            }, 5000);
           }
         }
         
