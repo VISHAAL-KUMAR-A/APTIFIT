@@ -1120,61 +1120,22 @@
             });
             
             const didData = await didResponse.json();
-            debugLog('D-ID response received: ' + (didData.success ? 'Success' : 'Failed'));
+            debugLog('D-ID initial response received: ' + (didData.success ? 'Success' : 'Failed'));
             
             if (!didData.success) {
               throw new Error(didData.message || 'Error creating talking avatar');
             }
             
-            // Pre-load the video to ensure it's fully loaded before displaying
-            debugLog('Preloading video: ' + didData.video_url);
-            
-            // Set the video source
-            const avatarVideo = document.getElementById('avatar-video');
-            avatarVideo.src = didData.video_url;
-            avatarVideo.controls = false;
-            avatarVideo.muted = false;
-            
-            // Style the video container for avatar appearance
-            const videoContainer = document.getElementById('avatar-video-container');
-            videoContainer.style.borderRadius = '8px';
-            videoContainer.style.overflow = 'hidden';
-            videoContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.2)';
-            videoContainer.style.background = 'transparent';
-            videoContainer.style.width = '100%';
-            videoContainer.style.maxWidth = '360px';
-            videoContainer.style.margin = '0 auto';
-            videoContainer.style.aspectRatio = '4/3';
-            videoContainer.style.border = '1px solid rgba(209, 213, 219, 0.2)';
-            
-            // Style the video itself
-            avatarVideo.style.width = '100%';
-            avatarVideo.style.height = '100%';
-            avatarVideo.style.backgroundColor = 'transparent';
-            avatarVideo.style.objectFit = 'contain';
-            
-            setAvatarState('video');
-            
-            // Play the video
-            const playPromise = avatarVideo.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(error => {
-                debugLog('Auto-play prevented: ' + error.message);
-                
-                // Create a play button if autoplay is blocked
-                const playMessage = document.createElement('div');
-                playMessage.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 cursor-pointer';
-                playMessage.innerHTML = '<div class="text-white text-center p-4"><i class="fas fa-play-circle text-4xl mb-2"></i><p>Click to play response</p></div>';
-                videoContainer.appendChild(playMessage);
-                
-                // Remove the message when clicked and play the video
-                playMessage.addEventListener('click', function() {
-                  avatarVideo.play().catch(e => debugLog('Cannot play on click: ' + e.message));
-                  playMessage.remove();
-                });
-              });
+            // Check if we need to poll for completion (for production environments)
+            if (didData.pending && didData.talk_id) {
+              // Start polling for completion
+              await pollAvatarStatus(didData.talk_id);
+            } else if (didData.video_url) {
+              // Direct response with video URL (for local development)
+              setAvatarVideo(didData.video_url);
+            } else {
+              throw new Error('Invalid response from server');
             }
-            
           } catch (error) {
             debugLog('Error: ' + error.message);
             
@@ -1186,6 +1147,105 @@
             
             setAvatarState('placeholder');
             addMessageToHistory('Sorry, there was an error: ' + error.message, 'ai');
+          }
+        }
+        
+        // New function to poll for avatar completion
+        async function pollAvatarStatus(talkId) {
+          const maxAttempts = 30; // 30 attempts with 2-second delay = 60 seconds max
+          const pollingInterval = 2000; // 2 seconds
+          
+          debugLog('Starting to poll for avatar status');
+          
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            debugLog(`Polling attempt ${attempt + 1}/${maxAttempts}`);
+            
+            try {
+              const statusResponse = await fetch('{% url "check_avatar_status" %}', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ talk_id: talkId })
+              });
+              
+              const statusData = await statusResponse.json();
+              
+              if (!statusData.success) {
+                throw new Error(statusData.message || 'Error checking avatar status');
+              }
+              
+              if (statusData.completed) {
+                // Avatar is ready
+                debugLog('Avatar generation completed');
+                setAvatarVideo(statusData.video_url);
+                return;
+              }
+              
+              // Update loading message with current status
+              document.querySelector('#avatar-loading p').textContent = 
+                `Creating avatar... Status: ${statusData.status} (attempt ${attempt + 1}/${maxAttempts})`;
+              
+              // Wait before next polling attempt
+              await new Promise(resolve => setTimeout(resolve, pollingInterval));
+            } catch (error) {
+              debugLog('Error polling for status: ' + error.message);
+              // Continue polling despite errors
+              await new Promise(resolve => setTimeout(resolve, pollingInterval));
+            }
+          }
+          
+          // If we reach here, polling timed out
+          throw new Error('Avatar generation timed out. Please try again.');
+        }
+        
+        // Function to set up the video when URL is available
+        function setAvatarVideo(videoUrl) {
+          const avatarVideo = document.getElementById('avatar-video');
+          
+          // Style the video container for avatar appearance
+          const videoContainer = document.getElementById('avatar-video-container');
+          videoContainer.style.borderRadius = '8px';
+          videoContainer.style.overflow = 'hidden';
+          videoContainer.style.width = '100%';
+          videoContainer.style.maxWidth = '360px';
+          videoContainer.style.margin = '0 auto';
+          videoContainer.style.aspectRatio = '4/3';
+          videoContainer.style.background = 'transparent';
+          videoContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.2)';
+          videoContainer.style.border = '1px solid rgba(209, 213, 219, 0.2)';
+          
+          // Configure the video
+          avatarVideo.controls = false;
+          avatarVideo.style.width = '100%';
+          avatarVideo.style.height = '100%';
+          avatarVideo.style.objectFit = 'contain';
+          avatarVideo.style.backgroundColor = 'transparent';
+          
+          // Set video source
+          avatarVideo.src = videoUrl;
+          avatarVideo.muted = false;
+          setAvatarState('video');
+          
+          // Play the video
+          const playPromise = avatarVideo.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              debugLog('Auto-play prevented: ' + error.message);
+              
+              // Create a play button if autoplay is blocked
+              const playMessage = document.createElement('div');
+              playMessage.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 cursor-pointer';
+              playMessage.innerHTML = '<div class="text-white text-center p-4"><i class="fas fa-play-circle text-4xl mb-2"></i><p>Click to play response</p></div>';
+              videoContainer.appendChild(playMessage);
+              
+              // Remove the message when clicked and play the video
+              playMessage.addEventListener('click', function() {
+                avatarVideo.play().catch(e => debugLog('Cannot play on click: ' + e.message));
+                playMessage.remove();
+              });
+            });
           }
         }
         

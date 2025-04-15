@@ -2325,7 +2325,7 @@ def process_speech_query(request):
 @login_required
 @require_POST
 def create_talking_avatar(request):
-    """Create a talking avatar using D-ID API with optimized settings for an avatar-like experience"""
+    """Create a talking avatar using D-ID API with optimized settings for production environments"""
     try:
         data = json.loads(request.body)
         message = data.get('message', '')
@@ -2353,7 +2353,7 @@ def create_talking_avatar(request):
         # D-ID API endpoint
         url = "https://api.d-id.com/talks"
 
-        # Payload for D-ID - optimized for avatar-like appearance
+        # Payload for D-ID - with optimized settings for faster generation
         payload = {
             # Use a pre-optimized avatar for faster generation
             "source_url": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg",
@@ -2369,11 +2369,8 @@ def create_talking_avatar(request):
             },
             "config": {
                 "fluent": "false",
-                "stitch": True,      # Use stitching for faster generation
-                "result_format": "mp4",  # Keep mp4 for better compatibility
-                "align_expand": False,  # Avoid expanding the frame
-                "crop": True,           # Crop to focus on the avatar face
-                "pad_audio": 0          # Minimize padding for more continuous playback
+                "stitch": True,  # Use stitching for faster generation
+                "result_format": "mp4"  # Use mp4 for better compatibility
             }
         }
 
@@ -2409,71 +2406,94 @@ def create_talking_avatar(request):
                 'message': 'No talk ID returned from D-ID'
             })
 
-        # Poll the result URL to get the video URL
-        result_url = f"https://api.d-id.com/talks/{talk_id}"
-
-        # Try to get the result (with a simple polling approach)
-        max_attempts = 60  # Increased max attempts to allow for longer processing time
-        polling_interval = 2  # seconds
-
-        for attempt in range(max_attempts):
-            logger.info(f"Polling attempt {attempt+1}/{max_attempts}")
-
-            # Get result with SSL verification disabled
-            result_response = requests.get(
-                result_url, headers=headers, verify=False)
-
-            if result_response.status_code != 200:
-                logger.error(
-                    f"D-ID polling error: Status {result_response.status_code}")
-                time.sleep(polling_interval)
-                continue
-
-            result_data = result_response.json()
-            status = result_data.get('status')
-
-            logger.info(f"D-ID talk status: {status}")
-
-            if status == 'done':
-                video_url = result_data.get('result_url')
-                if not video_url:
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'No video URL in completed D-ID response'
-                    })
-
-                logger.info(f"D-ID video URL: {video_url}")
-
-                # Return the video URL along with a flag indicating it should be displayed as an avatar
-                return JsonResponse({
-                    'success': True,
-                    'video_url': video_url,
-                    'is_avatar': True
-                })
-            elif status == 'error':
-                error_msg = result_data.get('error', 'Unknown error')
-                logger.error(f"D-ID processing error: {error_msg}")
-                return JsonResponse({
-                    'success': False,
-                    'message': f"D-ID processing error: {error_msg}"
-                })
-            elif status in ['created', 'started', 'processed', 'processing']:
-                # Still processing, continue polling
-                time.sleep(polling_interval)
-            else:
-                # Unknown status
-                logger.warning(f"Unknown D-ID status: {status}")
-                time.sleep(polling_interval)
-
-        logger.error(
-            "D-ID processing timed out after maximum polling attempts")
+        # For production environments, don't wait for the video to complete processing
+        # Instead, return the talk ID immediately and let the frontend poll for completion
         return JsonResponse({
-            'success': False,
-            'message': 'D-ID processing timed out. The service might be experiencing high demand.'
+            'success': True,
+            'pending': True,
+            'talk_id': talk_id,
+            'message': 'Avatar generation started. Frontend will poll for completion.'
         })
 
     except Exception as e:
         logger.error(f"Error in create_talking_avatar: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
+
+
+@login_required
+@require_POST
+def check_avatar_status(request):
+    """Check the status of a D-ID talking avatar generation"""
+    try:
+        data = json.loads(request.body)
+        talk_id = data.get('talk_id')
+
+        if not talk_id:
+            return JsonResponse({'success': False, 'message': 'Missing talk ID'})
+
+        # Get D-ID credentials from environment variables
+        username = os.environ.get('DID_API_USERNAME', '')
+        password = os.environ.get('DID_API_PASSWORD', '')
+
+        if not username or not password:
+            return JsonResponse({'success': False, 'message': 'D-ID API credentials not configured'})
+
+        # Encode credentials
+        credentials = f"{username}:{password}"
+        encoded_credentials = base64.b64encode(credentials.encode()).decode()
+
+        # Check status from D-ID API
+        result_url = f"https://api.d-id.com/talks/{talk_id}"
+        headers = {
+            "accept": "application/json",
+            "authorization": f"Basic {encoded_credentials}"
+        }
+
+        # Get result with SSL verification disabled
+        result_response = requests.get(
+            result_url, headers=headers, verify=False)
+
+        if result_response.status_code != 200:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error checking status: {result_response.status_code}'
+            })
+
+        result_data = result_response.json()
+        status = result_data.get('status')
+
+        if status == 'done':
+            video_url = result_data.get('result_url')
+            if not video_url:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No video URL in completed D-ID response'
+                })
+
+            return JsonResponse({
+                'success': True,
+                'completed': True,
+                'video_url': video_url
+            })
+        elif status == 'error':
+            error_msg = result_data.get('error', 'Unknown error')
+            return JsonResponse({
+                'success': False,
+                'message': f'D-ID processing error: {error_msg}'
+            })
+        else:
+            # Still processing
+            return JsonResponse({
+                'success': True,
+                'completed': False,
+                'status': status
+            })
+
+    except Exception as e:
+        logger.error(f"Error in check_avatar_status: {str(e)}")
         return JsonResponse({
             'success': False,
             'message': str(e)
