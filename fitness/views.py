@@ -2324,7 +2324,7 @@ def process_speech_query(request):
 @login_required
 @require_POST
 def create_talking_avatar(request):
-    """Create a talking avatar using D-ID API with optimized settings"""
+    """Create a talking avatar using D-ID API with optimized settings for an avatar-like experience"""
     try:
         data = json.loads(request.body)
         message = data.get('message', '')
@@ -2352,7 +2352,7 @@ def create_talking_avatar(request):
         # D-ID API endpoint
         url = "https://api.d-id.com/talks"
 
-        # Payload for D-ID - with optimized settings for faster generation
+        # Payload for D-ID - optimized for avatar-like appearance
         payload = {
             # Use a pre-optimized avatar for faster generation
             "source_url": "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg",
@@ -2368,8 +2368,11 @@ def create_talking_avatar(request):
             },
             "config": {
                 "fluent": "false",
-                "stitch": True,  # Use stitching for faster generation
-                "result_format": "mp4"  # Use mp4 for better compatibility
+                "stitch": True,      # Use stitching for faster generation
+                "result_format": "mp4",  # Keep mp4 for better compatibility
+                "align_expand": False,  # Avoid expanding the frame
+                "crop": True,           # Crop to focus on the avatar face
+                "pad_audio": 0          # Minimize padding for more continuous playback
             }
         }
 
@@ -2439,9 +2442,12 @@ def create_talking_avatar(request):
                     })
 
                 logger.info(f"D-ID video URL: {video_url}")
+
+                # Return the video URL along with a flag indicating it should be displayed as an avatar
                 return JsonResponse({
                     'success': True,
-                    'video_url': video_url
+                    'video_url': video_url,
+                    'is_avatar': True
                 })
             elif status == 'error':
                 error_msg = result_data.get('error', 'Unknown error')

@@ -119,27 +119,6 @@
       #toggle-sound-btn:active i {
         animation: sound-wave 0.5s ease-out;
       }
-      
-      .error-overlay {
-        position: absolute;
-        inset: 0;
-        background-color: rgba(239, 68, 68, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.5rem;
-        z-index: 10;
-      }
-      
-      .error-message {
-        background-color: rgba(30, 30, 30, 0.9);
-        color: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        max-width: 80%;
-        text-align: center;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      }
     </style>
   </head>
   <body class="bg-gray-900 min-h-screen text-gray-200">
@@ -540,6 +519,68 @@
       </div>
     </div>
 
+    <!-- AI Talking Avatar Section - Add after the Nutrition Tips section -->
+    <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden mt-6">
+      <div class="bg-blue-800 text-white p-4">
+        <h2 class="text-xl font-bold">AI Assistant</h2>
+      </div>
+      <div class="p-5">
+        <div id="ai-avatar-container" class="flex flex-col items-center">
+          <!-- Avatar video will be displayed here -->
+          <div id="avatar-video-container" class="w-full max-w-md rounded-lg overflow-hidden mb-4 bg-gray-900 flex items-center justify-center" style="min-height: 240px; aspect-ratio: 16/9;">
+            <video id="avatar-video" class="w-full h-full object-contain" controls playsinline></video>
+            <div id="avatar-loading" class="text-center hidden">
+              <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-2"></div>
+              <p class="text-gray-400">Generating avatar response...</p>
+              <p class="text-xs text-gray-500 mt-2">This may take 20-30 seconds...</p>
+            </div>
+            <div id="avatar-placeholder" class="text-center">
+              <i class="fas fa-robot text-5xl text-gray-600 mb-2"></i>
+              <p class="text-gray-400">Ask a question to see the AI avatar</p>
+            </div>
+          </div>
+          
+          <div class="w-full flex flex-col space-y-3">
+            <!-- Voice recognition controls -->
+            <div class="flex items-center justify-between bg-gray-700 p-3 rounded-lg">
+              <div class="flex items-center space-x-2">
+                <button id="start-recording" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition duration-300">
+                  <i class="fas fa-microphone"></i>
+                </button>
+                <span id="recording-status" class="text-gray-400">Press to speak</span>
+              </div>
+              <div class="flex space-x-2">
+                <button id="stop-recording" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition duration-300 hidden">
+                  <i class="fas fa-stop"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Text input as backup -->
+            <div class="flex space-x-2">
+              <input id="text-input" type="text" placeholder="Or type your question here..." 
+                     class="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
+              <button id="send-text-input" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded transition duration-300">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+            
+            <!-- Debug info panel -->
+            <div id="debug-panel" class="bg-gray-900 p-2 rounded-lg text-xs text-gray-400">
+              <p id="debug-info">Debug information will appear here</p>
+            </div>
+            
+            <!-- Conversation history -->
+            <div id="conversation-history" class="mt-4 max-h-60 overflow-y-auto bg-gray-700 rounded-lg p-2 space-y-3">
+              <div class="text-gray-400 text-center italic">
+                Your conversation will appear here
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       // Notification popup functionality
       const notificationBtn = document.getElementById('notification-btn');
@@ -763,6 +804,413 @@
           requestAnimationFrame(pulseAvatar);
         }
         pulseAvatar();
+      });
+
+      // D-ID AI Avatar Integration
+      document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const startRecordingBtn = document.getElementById('start-recording');
+        const stopRecordingBtn = document.getElementById('stop-recording');
+        const recordingStatus = document.getElementById('recording-status');
+        const textInput = document.getElementById('text-input');
+        const sendTextInputBtn = document.getElementById('send-text-input');
+        const conversationHistory = document.getElementById('conversation-history');
+        const avatarVideo = document.getElementById('avatar-video');
+        const avatarLoading = document.getElementById('avatar-loading');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const debugPanel = document.getElementById('debug-panel');
+        const debugInfo = document.getElementById('debug-info');
+        
+        // Show debug panel in development
+        const showDebug = {% if debug %}true{% else %}false{% endif %};
+        if (showDebug) {
+          debugPanel.classList.remove('hidden');
+        }
+        
+        // Variables for speech recognition
+        let recognition = null;
+        let isRecording = false;
+        let recognizedText = '';
+        let finalTranscript = '';
+        let interimTranscript = '';
+        
+        // Function to log debug messages
+        function debugLog(message) {
+          console.log('[AI Avatar]', message);
+          debugInfo.textContent = message;
+        }
+        
+        // Setup Web Speech API with better error handling
+        function setupSpeechRecognition() {
+          debugLog('Setting up speech recognition...');
+          
+          try {
+            // Check if browser supports speech recognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+              debugLog('Speech recognition not supported');
+              alert('Speech recognition is not supported in your browser. Please try Chrome or Edge.');
+              return false;
+            }
+            
+            recognition = new SpeechRecognition();
+            
+            // Configure for shorter sessions to avoid network timeouts
+            recognition.continuous = false;     // Changed to false to avoid network timeout
+            recognition.interimResults = true;  // Get interim results
+            recognition.lang = 'en-US';
+            
+            // Event handlers
+            recognition.onstart = function() {
+              isRecording = true;
+              finalTranscript = '';              // Clear transcript on new recording
+              interimTranscript = '';
+              recordingStatus.textContent = 'Listening...';
+              recordingStatus.classList.add('text-green-400');
+              recordingStatus.classList.remove('text-gray-400', 'text-red-400');
+              startRecordingBtn.classList.add('hidden');
+              stopRecordingBtn.classList.remove('hidden');
+              debugLog('Recording started');
+            };
+            
+            recognition.onresult = function(event) {
+              interimTranscript = '';
+              
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                
+                if (event.results[i].isFinal) {
+                  finalTranscript += transcript + ' ';
+                  debugLog('Got transcript: ' + finalTranscript);
+                } else {
+                  interimTranscript += transcript;
+                }
+              }
+              
+              // Update status with current speech
+              if (interimTranscript) {
+                recordingStatus.textContent = interimTranscript;
+              } else if (finalTranscript) {
+                recordingStatus.textContent = finalTranscript;
+              }
+              
+              // Store the recognized text
+              recognizedText = finalTranscript;
+            };
+            
+            recognition.onerror = function(event) {
+              debugLog('Speech recognition error: ' + event.error);
+              
+              if (event.error === 'network') {
+                // Handle network errors by simply continuing with what we've captured so far
+                debugLog('Network error, using text captured so far: ' + recognizedText);
+                if (recognizedText.trim()) {
+                  stopRecording();
+                } else {
+                  // If we haven't captured anything yet, just show an error
+                  recordingStatus.textContent = 'Network error. Try using text input.';
+                  recordingStatus.classList.add('text-red-400');
+                  recordingStatus.classList.remove('text-green-400');
+                  stopRecording(true);
+                }
+              } else if (event.error === 'no-speech') {
+                // Just update the status but keep listening
+                recordingStatus.textContent = 'No speech detected. Keep talking...';
+              } else {
+                // For other errors, stop recording
+                stopRecording(true);
+              }
+            };
+            
+            recognition.onend = function() {
+              debugLog('Recognition ended');
+              
+              // Only restart if explicitly needed (we'll use manual restarts)
+              if (isRecording && !finalTranscript.trim()) {
+                // If we're still recording but don't have a transcript, restart
+                try {
+                  setTimeout(() => {
+                    if (isRecording) {
+                      recognition.start();
+                      debugLog('Restarted recognition');
+                    }
+                  }, 500);
+                } catch (e) {
+                  debugLog('Could not restart recognition: ' + e.message);
+                  stopRecording(true);
+                }
+              } else {
+                // If we have text or we're not recording, stop
+                stopRecording();
+              }
+            };
+            
+            return true;
+          } catch (error) {
+            debugLog('Error setting up speech recognition: ' + error.message);
+            alert('There was an error setting up speech recognition. Please try using the text input instead.');
+            return false;
+          }
+        }
+        
+        // Update startRecording function to use shorter sessions
+        function startRecording() {
+          if (!recognition && !setupSpeechRecognition()) {
+            return;
+          }
+          
+          try {
+            recognition.start();
+            debugLog('Starting speech recognition');
+          } catch (error) {
+            debugLog('Error starting recognition: ' + error.message);
+            alert('Could not start listening. Please try using text input instead.');
+          }
+        }
+        
+        function stopRecording(isError = false) {
+          if (recognition) {
+            try {
+              if (isRecording) {
+                recognition.stop();
+                debugLog('Stopping recognition');
+              }
+            } catch (error) {
+              debugLog('Error stopping recognition: ' + error.message);
+            }
+          }
+          
+          isRecording = false;
+          
+          // Set the status text and color
+          if (isError) {
+            recordingStatus.textContent = 'Error, try again';
+            recordingStatus.classList.add('text-red-400');
+            recordingStatus.classList.remove('text-green-400', 'text-gray-400');
+          } else if (recognizedText.trim()) {
+            recordingStatus.textContent = recognizedText.trim();
+            recordingStatus.classList.add('text-gray-400');
+            recordingStatus.classList.remove('text-green-400', 'text-red-400');
+          } else {
+            recordingStatus.textContent = 'Press to speak';
+            recordingStatus.classList.add('text-gray-400');
+            recordingStatus.classList.remove('text-green-400', 'text-red-400');
+          }
+          
+          // Show/hide buttons
+          startRecordingBtn.classList.remove('hidden');
+          stopRecordingBtn.classList.add('hidden');
+          
+          // Process the text if we have a final transcript
+          if (!isError && recognizedText.trim()) {
+            // Give a moment for UI to update before processing
+            setTimeout(() => {
+              processUserQuery(recognizedText.trim());
+              recognizedText = '';
+              finalTranscript = '';
+            }, 300);
+          }
+        }
+        
+        // Function to add messages to the conversation history
+        function addMessageToHistory(message, sender) {
+          // Clear initial message if it's the first real message
+          if (conversationHistory.querySelector('.italic')) {
+            conversationHistory.innerHTML = '';
+          }
+          
+          const messageElement = document.createElement('div');
+          messageElement.className = `p-2 rounded-lg ${sender === 'user' ? 'bg-blue-900 ml-12' : 'bg-gray-800 mr-12'}`;
+          
+          const contentWrapper = document.createElement('div');
+          contentWrapper.className = 'flex items-start';
+          
+          // Add icon based on sender
+          const iconElement = document.createElement('div');
+          iconElement.className = 'flex-shrink-0 mr-2';
+          iconElement.innerHTML = sender === 'user' 
+            ? '<i class="fas fa-user text-blue-400"></i>' 
+            : '<i class="fas fa-robot text-purple-400"></i>';
+          
+          const textElement = document.createElement('div');
+          textElement.className = 'text-white';
+          textElement.textContent = message;
+          
+          contentWrapper.appendChild(iconElement);
+          contentWrapper.appendChild(textElement);
+          messageElement.appendChild(contentWrapper);
+          
+          conversationHistory.appendChild(messageElement);
+          conversationHistory.scrollTop = conversationHistory.scrollHeight;
+        }
+        
+        // Function to show/hide loading indicator and placeholder
+        function setAvatarState(state) {
+          avatarVideo.classList.add('hidden');
+          avatarLoading.classList.add('hidden');
+          avatarPlaceholder.classList.add('hidden');
+          
+          if (state === 'loading') {
+            avatarLoading.classList.remove('hidden');
+          } else if (state === 'video') {
+            avatarVideo.classList.remove('hidden');
+          } else {
+            avatarPlaceholder.classList.remove('hidden');
+          }
+        }
+        
+        // Function to send user query to backend and generate D-ID video
+        async function processUserQuery(userText) {
+          debugLog('Processing query: ' + userText);
+          
+          // Add user message to history
+          addMessageToHistory(userText, 'user');
+          
+          // Show loading indicator with message about expected wait time
+          setAvatarState('loading');
+          const loadingMessage = 'Processing your question...';
+          addMessageToHistory(loadingMessage, 'ai');
+          
+          try {
+            // First, get the GPT response since it's usually faster
+            debugLog('Sending request to process_speech_query');
+            const gptResponse = await fetch('{% url "process_speech_query" %}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+              },
+              body: JSON.stringify({ query: userText })
+            });
+            
+            const gptData = await gptResponse.json();
+            debugLog('GPT response received: ' + (gptData.success ? 'Success' : 'Failed'));
+            
+            if (!gptData.success) {
+              throw new Error(gptData.message || 'Error processing your request');
+            }
+            
+            // Remove loading message and add GPT response to history
+            conversationHistory.removeChild(conversationHistory.lastChild);
+            addMessageToHistory(gptData.response, 'ai');
+            
+            // Update loading message to be more specific about D-ID
+            document.querySelector('#avatar-loading p').textContent = 'Generating talking avatar (20-30 seconds)...';
+            
+            debugLog('Sending request to create_talking_avatar');
+            // Create D-ID talking avatar with the GPT response
+            const didResponse = await fetch('{% url "create_talking_avatar" %}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+              },
+              body: JSON.stringify({ message: gptData.response })
+            });
+            
+            const didData = await didResponse.json();
+            debugLog('D-ID response received: ' + (didData.success ? 'Success' : 'Failed'));
+            
+            if (!didData.success) {
+              throw new Error(didData.message || 'Error creating talking avatar');
+            }
+            
+            // Configure the video element for avatar-like appearance
+            const avatarVideo = document.getElementById('avatar-video');
+            
+            // Remove default video controls
+            avatarVideo.controls = false;
+            
+            // Style the video for avatar appearance
+            avatarVideo.className = 'w-full h-full object-cover rounded-full';
+            avatarVideo.style.background = 'transparent';
+            
+            // Additional styles for the container
+            const videoContainer = document.getElementById('avatar-video-container');
+            videoContainer.className = 'w-64 h-64 rounded-full overflow-hidden mx-auto bg-gradient-to-r from-blue-500 to-purple-600';
+            videoContainer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
+            
+            // Pre-load the video to ensure it's fully loaded before displaying
+            debugLog('Preloading video: ' + didData.video_url);
+            
+            // Set the video source
+            avatarVideo.src = didData.video_url;
+            avatarVideo.muted = false;
+            setAvatarState('video');
+            
+            // Custom play handling to prevent user control
+            avatarVideo.onpause = function() {
+              // Only auto-resume if video isn't ended and wasn't paused by user interaction
+              if (!avatarVideo.ended) {
+                setTimeout(() => {
+                  avatarVideo.play().catch(e => {
+                    console.log('Auto-resume prevented by browser');
+                  });
+                }, 100);
+              }
+            };
+            
+            // Play the video
+            const playPromise = avatarVideo.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                debugLog('Auto-play prevented: ' + error.message);
+                
+                // Instead of showing play message with button, try to play after user interaction
+                document.addEventListener('click', function playOnFirstClick() {
+                  avatarVideo.play().catch(e => console.log('Cannot play on click:', e));
+                  document.removeEventListener('click', playOnFirstClick);
+                }, { once: true });
+                
+                const playMessage = document.createElement('div');
+                playMessage.className = 'absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full';
+                playMessage.innerHTML = '<div class="text-white text-center p-4"><i class="fas fa-play-circle text-4xl mb-2"></i><p>Click to activate</p></div>';
+                videoContainer.appendChild(playMessage);
+                
+                // Remove the message when the video is clicked
+                playMessage.addEventListener('click', function() {
+                  avatarVideo.play();
+                  playMessage.remove();
+                });
+              });
+            }
+            
+          } catch (error) {
+            debugLog('Error: ' + error.message);
+            // Remove loading message
+            if (conversationHistory.lastChild && conversationHistory.lastChild.textContent.includes('Processing')) {
+              conversationHistory.removeChild(conversationHistory.lastChild);
+            }
+            
+            setAvatarState('placeholder');
+            addMessageToHistory('Sorry, there was an error: ' + error.message, 'ai');
+          }
+        }
+        
+        // Event listeners
+        startRecordingBtn.addEventListener('click', startRecording);
+        stopRecordingBtn.addEventListener('click', function() {
+          stopRecording();
+        });
+        
+        sendTextInputBtn.addEventListener('click', function() {
+          if (textInput.value.trim() !== '') {
+            processUserQuery(textInput.value.trim());
+            textInput.value = '';
+          }
+        });
+        
+        textInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' && this.value.trim() !== '') {
+            processUserQuery(this.value.trim());
+            this.value = '';
+          }
+        });
+        
+        // Initialize
+        setAvatarState('placeholder');
+        debugLog('AI Avatar initialized');
       });
     </script>
   </body>
