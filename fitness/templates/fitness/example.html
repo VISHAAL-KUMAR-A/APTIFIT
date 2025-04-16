@@ -1,0 +1,27 @@
+{% extends 'fitness/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="profile-container">
+    <h1>{% trans "User Profile" %}</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        <label>{% trans "Username" %}</label>
+        {{ form.username }}
+        
+        <label>{% trans "Height (cm)" %}</label>
+        {{ form.height }}
+        
+        <!-- ... other form fields ... -->
+        
+        <button type="submit">{% trans "Save Changes" %}</button>
+    </form>
+    
+    <div class="stats">
+        <h2>{% trans "Fitness Statistics" %}</h2>
+        <p>{% blocktrans with bmi=user.userprofile.bmi %}Your BMI: {{ bmi }}{% endblocktrans %}</p>
+        <!-- ... other stats ... -->
+    </div>
+</div>
+{% endblock %}

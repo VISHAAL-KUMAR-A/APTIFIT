@@ -58,4 +58,5 @@ urlpatterns = [
          name='create_talking_avatar'),
     path('api/check_avatar_status/', views.check_avatar_status,
          name='check_avatar_status'),
+    path('change-language/', views.change_language, name='change_language'),
 ]

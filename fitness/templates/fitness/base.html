@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load i18n %}
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -97,6 +98,17 @@
                 {% endif %}
               </a>
             </div>
+            <form action="{% url 'change_language' %}" method="post" class="language-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <select name="language" onchange="this.form.submit()" class="bg-gray-700 text-gray-300 rounded-md text-sm py-1 px-2 border border-gray-600">
+                    {% for code, name in LANGUAGES %}
+                        <option value="{{ code }}" {% if request.LANGUAGE_CODE == code %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
             <a href="{% url 'change_password' %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
               Change Password
             </a>

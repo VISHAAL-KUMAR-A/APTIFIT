@@ -32,6 +32,9 @@ import time
 import logging
 import urllib3
 import certifi
+from django.http import HttpResponseRedirect
+from django.utils import translation
+from django.utils.translation import gettext as _
 
 # Disable SSL verification warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -2498,3 +2501,22 @@ def check_avatar_status(request):
             'success': False,
             'message': str(e)
         })
+
+
+@login_required
+def change_language(request):
+    if request.method == 'POST':
+        language = request.POST.get('language', 'en')
+
+        # Update user profile
+        profile = request.user.userprofile
+        profile.language = language
+        profile.save()
+
+        # Set the language for the current session
+        translation.activate(language)
+        request.session[translation.LANGUAGE_SESSION_KEY] = language
+
+        # Redirect back to previous page or home
+        next_url = request.POST.get('next', reverse('home'))
+        return HttpResponseRedirect(next_url)

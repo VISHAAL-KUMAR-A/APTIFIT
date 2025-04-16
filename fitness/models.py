@@ -30,6 +30,17 @@ class UserProfile(models.Model):
         ('other', 'Other'),
     ]
 
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('es', 'Spanish'),
+        ('fr', 'French'),
+        ('de', 'German'),
+        ('zh-hans', 'Chinese'),
+        ('ar', 'Arabic'),
+        ('hi', 'Hindi'),
+        # Add more languages as needed
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_password_change = models.DateTimeField(auto_now=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -44,7 +55,13 @@ class UserProfile(models.Model):
     # New cultural and dietary preference fields
     country = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
-    language = models.CharField(max_length=100, blank=True, null=True)
+    language = models.CharField(
+        max_length=10,
+        choices=LANGUAGE_CHOICES,
+        default='en',
+        blank=True,
+        null=True
+    )
     ethnic_group = models.CharField(
         max_length=20,
         choices=ETHNIC_GROUP_CHOICES,
