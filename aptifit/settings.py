@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "fitness",
+    "channels",
     "whitenoise.runserver_nostatic",
     "whitenoise",
     "django.contrib.sites",
@@ -86,6 +87,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "aptifit.wsgi.application"
+ASGI_APPLICATION = "aptifit.routing.application"
 
 
 # Database
@@ -293,4 +295,20 @@ if not DEBUG:
     AWS_DEFAULT_ACL = 'public-read'
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
+    }
+REDIS = False
+if REDIS:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [("localhost", 6379)],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
     }
