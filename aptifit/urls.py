@@ -19,15 +19,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-import os
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("fitness.urls")),
+    path('admin/', admin.site.urls),
+    path('', include('fitness.urls')),
     path("accounts/", include("allauth.urls")),
 ]
 
-# Add this condition to serve media files during development
+# Add static and media URL patterns for development
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL,
+                          document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL,
                           document_root=settings.MEDIA_ROOT)
+
+# Remove or comment out these lines
+# if hasattr(settings, 'DEBUG_TOOLBAR') and settings.DEBUG_TOOLBAR:
+#     import debug_toolbar
+#     urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))

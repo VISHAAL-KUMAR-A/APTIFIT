@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "storages",
+    # Remove or comment out the line below
+    # "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -66,6 +68,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # Remove or comment out the line below
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "aptifit.urls"
@@ -87,7 +91,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "aptifit.wsgi.application"
-ASGI_APPLICATION = "aptifit.routing.application"
+ASGI_APPLICATION = "aptifit.custom_asgi.application"
 
 
 # Database
@@ -312,3 +316,18 @@ else:
             'BACKEND': 'channels.layers.InMemoryChannelLayer',
         },
     }
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
+
+# Option 3: Conditionally enable Debug Toolbar
+# If you want to keep Debug Toolbar for development but disable it for users,
+# you can add this condition:
+
+DEBUG_TOOLBAR = False  # Set this to False to disable Debug Toolbar
+
+if DEBUG and DEBUG_TOOLBAR:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+    INTERNAL_IPS = ["127.0.0.1"]

@@ -43,26 +43,35 @@
       <!-- Right panel for chat -->
       <div class="{% if user.is_superuser %}md:col-span-3{% endif %} flex flex-col h-[70vh]">
         <!-- Chat header -->
-        <div class="p-4 bg-gray-700 border-b border-gray-600 flex items-center">
-          {% if user.is_superuser %}
-            {% if selected_user %}
-              <div class="bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium mr-3">
-                {{ selected_user.username|first|upper }}
-              </div>
-              <h3 class="font-medium text-white">{{ selected_user.username }}</h3>
+        <div class="p-4 bg-gray-700 border-b border-gray-600 flex items-center justify-between">
+          <!-- Left part with user info -->
+          <div class="flex items-center">
+            {% if user.is_superuser %}
+              {% if selected_user %}
+                <div class="bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium mr-3">
+                  {{ selected_user.username|first|upper }}
+                </div>
+                <h3 class="font-medium text-white">{{ selected_user.username }}</h3>
+              {% else %}
+                <h3 class="font-medium text-gray-400">Select a user to start chatting</h3>
+              {% endif %}
             {% else %}
-              <h3 class="font-medium text-gray-400">Select a user to start chatting</h3>
+              {% if admin_user %}
+                <div class="bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium mr-3">
+                  {{ admin_user.username|first|upper }}
+                </div>
+                <h3 class="font-medium text-white">{{ admin_user.username }}</h3>
+              {% else %}
+                <h3 class="font-medium text-gray-400">No admin available</h3>
+              {% endif %}
             {% endif %}
-          {% else %}
-            {% if admin_user %}
-              <div class="bg-blue-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-medium mr-3">
-                {{ admin_user.username|first|upper }}
-              </div>
-              <h3 class="font-medium text-white">{{ admin_user.username }}</h3>
-            {% else %}
-              <h3 class="font-medium text-gray-400">No admin available</h3>
-            {% endif %}
-          {% endif %}
+          </div>
+
+          <!-- Right part with connection status -->
+          <div>
+            <span class="text-sm">Status: </span>
+            <span id="connection-status" class="text-yellow-500">Connecting...</span>
+          </div>
         </div>
         
         <!-- Chat messages -->
@@ -94,10 +103,10 @@
         <!-- Message input -->
         <div class="p-4 border-t border-gray-700">
           {% if user.is_superuser and selected_user or not user.is_superuser and admin_user %}
-            <form method="post" action="{% url 'send_message' %}" class="flex items-center">
+            <form id="message-form" class="flex items-center">
               {% csrf_token %}
-              <input type="hidden" name="receiver_id" value="{% if user.is_superuser %}{{ selected_user.id }}{% else %}{{ admin_user.id }}{% endif %}">
-              <input type="text" name="message" placeholder="Type your message..." class="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <input type="hidden" id="receiver-id" value="{% if user.is_superuser %}{{ selected_user.id }}{% else %}{{ admin_user.id }}{% endif %}">
+              <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 bg-gray-700 border border-gray-600 rounded-l-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
               <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg transition duration-300">
                 <i class="fas fa-paper-plane"></i>
               </button>
@@ -110,89 +119,151 @@
 </div>
 
 <script>
-  // Auto-scroll to bottom of chat when page loads
+  // WebSocket connection
+  let chatSocket = null;
+  let receiverId = {% if user.is_superuser and selected_user %}{{ selected_user.id }}{% elif not user.is_superuser and admin_user %}{{ admin_user.id }}{% else %}null{% endif %};
+  const userId = {{ user.id }};
+  
   document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     
-    // Start auto-refresh if we're in a chat
-    startAutoRefresh();
+    // Connect to WebSocket
+    connectWebSocket();
+    
+    // Setup message form submission
+    setupMessageForm();
   });
   
-  // Auto-refresh functionality
-  function startAutoRefresh() {
-    // Only start if we have a proper chat page (either superuser with selected user or regular user with admin)
-    {% if user.is_superuser and selected_user or not user.is_superuser and admin_user %}
-      // Check for new messages every 3 seconds
-      setInterval(refreshChatMessages, 3000);
-    {% endif %}
-  }
-  
-  function refreshChatMessages() {
-    const chatMessagesContainer = document.getElementById('chat-messages');
-    const currentUrl = window.location.href;
+  function connectWebSocket() {
+    // Close any existing connection
+    if (chatSocket && chatSocket.readyState !== WebSocket.CLOSED) {
+        chatSocket.close();
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const wsUrl = `${wsProtocol}${window.location.host}/ws/${userId}/`;
     
-    // Use AJAX to fetch updated messages
-    fetch(currentUrl, {
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-      }
-    })
-    .then(response => response.text())
-    .then(html => {
-      // Remember scroll position
-      const wasAtBottom = isScrolledToBottom(chatMessagesContainer);
-      
-      // Update only the messages
-      chatMessagesContainer.innerHTML = html;
-      
-      // If was at bottom before updating, scroll back to bottom
-      if (wasAtBottom) {
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-      }
-    })
-    .catch(error => {
-      console.error('Error refreshing messages:', error);
+    console.log("Attempting to connect to WebSocket at:", wsUrl);
+    
+    try {
+        chatSocket = new WebSocket(wsUrl);
+        
+        chatSocket.onopen = function(e) {
+            console.log('WebSocket connection established successfully!');
+            document.getElementById('connection-status').textContent = 'Connected';
+            document.getElementById('connection-status').className = 'text-green-500';
+        };
+        
+        chatSocket.onmessage = function(e) {
+            console.log('Message received:', e.data);
+            
+            try {
+                const data = JSON.parse(e.data);
+                
+                if (data.type === 'message') {
+                    console.log('Received chat message:', data);
+                    // Check if this message is relevant to the current chat
+                    if ((data.sender_id == receiverId && data.receiver_id == userId) || 
+                        (data.sender_id == userId && data.receiver_id == receiverId)) {
+                        // Add message to the chat directly
+                        addMessageToChat(data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing message:', error);
+            }
+        };
+        
+        chatSocket.onclose = function(e) {
+            console.log('WebSocket connection closed');
+            document.getElementById('connection-status').textContent = 'Disconnected';
+            document.getElementById('connection-status').className = 'text-red-500';
+            
+            // Try to reconnect after a delay
+            setTimeout(function() {
+                connectWebSocket();
+            }, 5000);
+        };
+        
+        chatSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+            document.getElementById('connection-status').textContent = 'Error';
+            document.getElementById('connection-status').className = 'text-red-500';
+        };
+    } catch (error) {
+        console.error('Error creating WebSocket:', error);
+        document.getElementById('connection-status').textContent = 'Failed to connect';
+        document.getElementById('connection-status').className = 'text-red-500';
+        
+        // Try to reconnect after a delay
+        setTimeout(function() {
+            connectWebSocket();
+        }, 5000);
+    }
+  }
+  
+  function addMessageToChat(messageData) {
+    const chatMessages = document.getElementById('chat-messages');
+    const isFromCurrentUser = messageData.sender_id == userId;
+    
+    // Create message element
+    const messageElement = document.createElement('div');
+    messageElement.className = `mb-4 ${isFromCurrentUser ? 'flex justify-end' : ''}`;
+    
+    // Format the timestamp
+    const timestamp = new Date(messageData.timestamp);
+    const formattedTime = timestamp.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: 'numeric',
+      hour12: true 
     });
+    
+    // Set message content
+    messageElement.innerHTML = `
+      <div class="${isFromCurrentUser ? 'bg-blue-600 text-white rounded-tl-lg rounded-tr-lg rounded-bl-lg' : 'bg-gray-700 text-gray-200 rounded-tr-lg rounded-tl-lg rounded-br-lg'} py-2 px-4 max-w-[80%]">
+        <p>${messageData.message}</p>
+        <p class="text-xs ${isFromCurrentUser ? 'text-blue-200' : 'text-gray-400'} mt-1 text-right">
+          ${formattedTime}
+        </p>
+      </div>
+    `;
+    
+    // Add to chat and scroll to bottom
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
   
-  // Helper to check if chat is scrolled to the bottom
-  function isScrolledToBottom(element) {
-    return Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop) < 10;
-  }
-  
-  // Form submission with AJAX to prevent full page reload
-  document.addEventListener('DOMContentLoaded', function() {
-    const messageForm = document.querySelector('form[action="{% url "send_message" %}"]');
+  function setupMessageForm() {
+    const messageForm = document.getElementById('message-form');
     
     if (messageForm) {
       messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const formData = new FormData(messageForm);
-        const messageInput = messageForm.querySelector('input[name="message"]');
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value.trim();
+        receiverId = document.getElementById('receiver-id').value;
         
-        // Only proceed if the message is not empty
-        if (messageInput.value.trim()) {
-          fetch('{% url "send_message" %}', {
-            method: 'POST',
-            body: formData,
-          })
-          .then(() => {
-            // Clear the message input
+        if (message && receiverId && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+          // Clear input first for better user experience
             messageInput.value = '';
             
-            // Refresh the messages immediately after sending
-            refreshChatMessages();
-          })
-          .catch(error => {
-            console.error('Error sending message:', error);
-          });
+          // Send message via WebSocket
+          chatSocket.send(JSON.stringify({
+            'type': 'message',
+            'to': receiverId,
+            'message': message
+          }));
+        } else {
+          console.error("Cannot send message - WebSocket not connected or message empty");
         }
       });
     }
-  });
+  }
 </script>
 {% endblock %} 

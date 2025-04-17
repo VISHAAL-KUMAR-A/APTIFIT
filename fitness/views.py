@@ -32,6 +32,7 @@ import time
 import logging
 import urllib3
 import certifi
+from django.db import models
 
 # Disable SSL verification warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -2045,109 +2046,101 @@ def health_tracker(request):
 
 @login_required
 def community(request):
-    """View for the community page"""
     user = request.user
-    context = {}
+    admin_user = User.objects.filter(is_superuser=True).first()
 
-    # If the user is a superuser, get all users for the left panel
+    # Debug information
+    print(f"Current user: {user.username} (ID: {user.id})")
+    if admin_user:
+        print(f"Admin user: {admin_user.username} (ID: {admin_user.id})")
+    else:
+        print("No admin user found")
+
+    # For superusers, show all users
     if user.is_superuser:
         all_users = User.objects.exclude(id=user.id).order_by('username')
-        context['all_users'] = all_users
-
-        # If a specific user is selected, get chat with that user
         selected_user_id = request.GET.get('user_id')
+        selected_user = None
+
         if selected_user_id:
             try:
                 selected_user = User.objects.get(id=selected_user_id)
-                context['selected_user'] = selected_user
-
-                # Get messages between superuser and selected user (both directions)
+                print(
+                    f"Selected user: {selected_user.username} (ID: {selected_user.id})")
+                # Get chat messages between superuser and selected user
                 chat_messages = CommunityMessage.objects.filter(
-                    (Q(sender=user) & Q(receiver=selected_user)) |
-                    (Q(sender=selected_user) & Q(receiver=user))
+                    (models.Q(sender=user) & models.Q(receiver=selected_user)) |
+                    (models.Q(sender=selected_user) & models.Q(receiver=user))
                 ).order_by('timestamp')
-
-                # Mark messages as read
-                unread_messages = chat_messages.filter(
-                    receiver=user, is_read=False)
-                unread_messages.update(is_read=True)
-
-                context['chat_messages'] = chat_messages
-
-                # If this is an AJAX request, return only the messages part
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return render(request, 'fitness/partials/chat_messages.html', context)
-
+                print(f"Found {chat_messages.count()} messages")
             except User.DoesNotExist:
-                pass
+                chat_messages = []
+                print("Selected user does not exist")
+        else:
+            chat_messages = []
+            print("No user selected")
+
+        context = {
+            'all_users': all_users,
+            'selected_user': selected_user,
+            'chat_messages': chat_messages,
+        }
     else:
-        # For normal users, show chat with admin (superuser)
-        admin_users = User.objects.filter(is_superuser=True)
+        # For regular users, only show messages with admin
+        chat_messages = CommunityMessage.objects.filter(
+            (models.Q(sender=user) & models.Q(receiver=admin_user)) |
+            (models.Q(sender=admin_user) & models.Q(receiver=user))
+        ).order_by('timestamp')
+        print(f"Found {chat_messages.count()} messages with admin")
 
-        if admin_users.exists():
-            admin_user = admin_users.first()
-            context['admin_user'] = admin_user
+        context = {
+            'admin_user': admin_user,
+            'chat_messages': chat_messages,
+        }
 
-            # Get messages between user and admin (both directions)
-            chat_messages = CommunityMessage.objects.filter(
-                (Q(sender=user) & Q(receiver=admin_user)) |
-                (Q(sender=admin_user) & Q(receiver=user))
-            ).order_by('timestamp')
+    # Check if it's an AJAX request - if so, only return the messages portion
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render(request, 'fitness/partials/chat_messages.html', context)
 
-            # Mark messages as read
-            unread_messages = chat_messages.filter(
-                receiver=user, is_read=False)
-            unread_messages.update(is_read=True)
-
-            context['chat_messages'] = chat_messages
-
-            # If this is an AJAX request, return only the messages part
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return render(request, 'fitness/partials/chat_messages.html', context)
-
+    # Set up WebSocket client ID
+    context['ws_client_id'] = user.id
     return render(request, 'fitness/community.html', context)
 
 
 @login_required
 def send_message(request):
-    """View to handle sending messages in the community"""
     if request.method == 'POST':
-        message_text = request.POST.get('message')
+        sender = request.user
         receiver_id = request.POST.get('receiver_id')
+        message_text = request.POST.get('message')
 
-        if not message_text:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'error', 'message': 'Message cannot be empty'})
-            messages.error(request, "Message cannot be empty")
-            return redirect('community')
+        if not message_text.strip():
+            return JsonResponse({'status': 'error', 'message': 'Message cannot be empty'})
 
         try:
             receiver = User.objects.get(id=receiver_id)
 
-            # Create and save the message
-            message = CommunityMessage(
-                sender=request.user,
+            # Create the message in database
+            message = CommunityMessage.objects.create(
+                sender=sender,
                 receiver=receiver,
                 message=message_text
             )
-            message.save()
 
-            # If it's an AJAX request, return JSON response
+            # For AJAX requests, return success response
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'status': 'success'})
 
-            # Otherwise redirect back to the conversation
-            if request.user.is_superuser:
-                return redirect(f'/community/?user_id={receiver_id}')
+            # For normal form submissions, redirect back to community page
+            if sender.is_superuser:
+                return redirect(f'{reverse("community")}?user_id={receiver.id}')
             else:
                 return redirect('community')
 
         except User.DoesNotExist:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'error', 'message': 'User not found'})
-            messages.error(request, "User not found")
-            return redirect('community')
+            return JsonResponse({'status': 'error', 'message': 'Receiver not found'})
 
+    # If not a POST request, redirect to community page
     return redirect('community')
 
 
